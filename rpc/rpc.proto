@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package rpc;
+
+option go_package = "github.com/mahmednabil109/koorde-overlay/rpc";
+
+
+service Koorde {
+     rpc BootStarpRPC (BootStrapPacket) returns (BootStrapReply){}
+     rpc LookupRPC (LookupPacket) returns (PeerPacket) {}
+     rpc SuccessorRPC (Empty) returns (PeerPacket){}
+     rpc UpdateNeigborRPC (Empty) returns (Empty) {}
+     rpc BroadCastRPC (BlockPacket) returns (Empty) {}
+}
+
+message PeerPacket {
+     string src_id = 1;
+     string src_ip = 2;
+     string start = 3;
+     repeated string interval = 4;
+}
+
+message LookupPacket {
+     string src_id = 1;
+     string src_ip = 2;
+     string id = 3;
+     string idShift = 4;
+     string iid = 5;
+}
+
+message BlockPacket {
+
+}
+
+message Empty {
+
+}
+
+message BootStrapPacket {
+     string src_id = 1;
+     string src_ip = 2;
+}
+
+message BootStrapReply {
+     PeerPacket Successor = 1;
+     PeerPacket D = 2;
+}
