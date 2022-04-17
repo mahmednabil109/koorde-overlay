@@ -27,7 +27,52 @@ func (ln *Localnode) BootStarpRPC(ctx context.Context, bootstrapPacket *pd.BootS
 }
 
 func (ln *Localnode) LookupRPC(ctx context.Context, lookupPacket *pd.LookupPacket) (*pd.PeerPacket, error) {
-	return &pd.PeerPacket{}, nil
+
+	k := ID(utils.ParseID(lookupPacket.K))
+	kShift := ID(utils.ParseID(lookupPacket.KShift))
+	i := ID(utils.ParseID(lookupPacket.I))
+
+	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
+		return form_peer_packet(ln.Successor), nil
+	}
+	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
+		if ln.D.kc == nil {
+			// TODO handle failer and pointer replacemnet
+			ln.D.InitConnection()
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		KShift, _ := kShift.LeftShift()
+		lookupPacket := &pd.LookupPacket{
+			SrcId:  ln.NodeAddr.String(),
+			SrcIp:  ln.NetAddr.String(),
+			K:      k.String(),
+			KShift: KShift.String(),
+			I:      i.TopShift(kShift).String()}
+		reply, err := ln.D.kc.LookupRPC(ctx, lookupPacket)
+
+		if err != nil {
+			log.Fatalf("lookup faild: %v", err)
+			return nil, err
+		}
+		return reply, nil
+	}
+
+	if ln.Successor.kc == nil {
+		// TODO handle failer and pointer replacemnet
+		ln.Successor.InitConnection()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	reply, err := ln.Successor.kc.LookupRPC(ctx, lookupPacket)
+
+	if err != nil {
+		log.Fatalf("lookup faild: %v", err)
+		return nil, err
+	}
+	return reply, nil
 }
 
 func (ln *Localnode) SuccessorRPC(ctx context.Context, e *pd.Empty) (*pd.PeerPacket, error) {
@@ -94,51 +139,20 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 func (ln *Localnode) Lookup(k ID) (*Peer, error) {
 	kShift, i := select_imaginary_node(k, ln.NodeAddr, ln.Successor.NodeAddr)
 
-	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
-		return ln.Successor, nil
-	}
-	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
-		if ln.D.kc == nil {
-			// TODO handle failer and pointer replacemnet
-			ln.D.InitConnection()
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		KShift, _ := kShift.LeftShift()
-		lookupPacket := &pd.LookupPacket{
-			SrcId:  ln.NodeAddr.String(),
-			SrcIp:  ln.NetAddr.String(),
-			K:      k.String(),
-			KShift: KShift.String(),
-			I:      i.TopShift(kShift).String()}
-		reply, err := ln.D.kc.LookupRPC(ctx, lookupPacket)
-
-		if err != nil {
-			log.Fatalf("lookup faild: %v", err)
-			return nil, err
-		}
-		return parse_peer_packet(reply), nil
-	}
-
-	if ln.Successor.kc == nil {
-		// TODO handle failer and pointer replacemnet
-		ln.Successor.InitConnection()
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	lookupPacket := &pd.LookupPacket{
-		SrcId:  ln.NetAddr.String(),
+		SrcId:  ln.NodeAddr.String(),
 		SrcIp:  ln.NetAddr.String(),
 		K:      k.String(),
 		KShift: kShift.String(),
-		I:      i.String()}
-	reply, err := ln.Successor.kc.LookupRPC(ctx, lookupPacket)
+		I:      i.TopShift(kShift).String()}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
+	reply, err := ln.D.kc.LookupRPC(ctx, lookupPacket)
 	if err != nil {
-		log.Fatalf("lookup faild: %v", err)
 		return nil, err
 	}
+
 	return parse_peer_packet(reply), nil
 }
 
@@ -151,11 +165,9 @@ func (ln *Localnode) BroadCast()       {}
 // Select the best imaginary node to start the lookup from
 // that is in the range (m, m.Successor] in the ring
 func select_imaginary_node(k, m, successor ID) (ID, ID) {
-	_id := make([]byte, len(m))
-	copy(_id, m)
 
 	for i := 2*len(m) - 1; i >= 0; i-- {
-		_id = m.MaskLowerWith(k, i)
+		_id := m.MaskLowerWith(k, i)
 
 		if ID(_id).InLXRange(m, successor) {
 			for j := 0; j < i; j++ {
@@ -166,7 +178,7 @@ func select_imaginary_node(k, m, successor ID) (ID, ID) {
 	}
 
 	// no Match
-	return k, ID(_id).AddOne()
+	return k, m.AddOne()
 }
 
 // init_grpc_server creates a tcp socket and registers
@@ -196,5 +208,14 @@ func parse_peer_packet(reply *pd.PeerPacket) *Peer {
 		NetAddr:  utils.ParseIP(reply.SrcIp),
 		Start:    utils.ParseID(reply.Start),
 		Interval: []ID{utils.ParseID(reply.Interval[0]), utils.ParseID(reply.Interval[1])},
+	}
+}
+
+func form_peer_packet(peer *Peer) *pd.PeerPacket {
+	return &pd.PeerPacket{
+		SrcId:    peer.NodeAddr.String(),
+		SrcIp:    peer.NetAddr.String(),
+		Start:    peer.Start.String(),
+		Interval: []string{peer.Interval[0].String(), peer.Interval[1].String()},
 	}
 }
