@@ -14,8 +14,8 @@ import (
 
 type Localnode struct {
 	Peer
-	D         *Peer
-	Successor *Peer
+	D         Peer
+	Successor Peer
 	s         *grpc.Server
 	pd.UnimplementedKoordeServer
 }
@@ -26,16 +26,20 @@ func (ln *Localnode) BootStarpRPC(ctx context.Context, bootstrapPacket *pd.BootS
 	return &pd.BootStrapReply{}, nil
 }
 
-func (ln *Localnode) LookupRPC(ctx context.Context, lookupPacket *pd.LookupPacket) (*pd.PeerPacket, error) {
+func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPacket) (*pd.PeerPacket, error) {
 
 	k := ID(utils.ParseID(lookupPacket.K))
 	kShift := ID(utils.ParseID(lookupPacket.KShift))
 	i := ID(utils.ParseID(lookupPacket.I))
 
+	log.Printf("@=%+v,%+v", ln.NodeAddr, ln.Successor.NodeAddr)
+	log.Printf("inside %s in (%s %s] !!", k, ln.NodeAddr, ln.Successor.NodeAddr)
 	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
-		return form_peer_packet(ln.Successor), nil
+		log.Println("Successor")
+		return form_peer_packet(&ln.Successor), nil
 	}
 	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
+		log.Println("Forward")
 		if ln.D.kc == nil {
 			// TODO handle failer and pointer replacemnet
 			ln.D.InitConnection()
@@ -58,7 +62,7 @@ func (ln *Localnode) LookupRPC(ctx context.Context, lookupPacket *pd.LookupPacke
 		}
 		return reply, nil
 	}
-
+	log.Println("Correction")
 	if ln.Successor.kc == nil {
 		// TODO handle failer and pointer replacemnet
 		ln.Successor.InitConnection()
@@ -96,8 +100,8 @@ func (ln *Localnode) Init(port int) error {
 	ln.NodeAddr = utils.SHA1OF(ln.NetAddr.String())
 	ln.Start = ln.NodeAddr
 	ln.Interval = []ID{ln.NodeAddr, ln.NodeAddr}
-	ln.Successor = &ln.Peer
-	ln.D = &ln.Peer
+	ln.Successor = ln.Peer
+	ln.D = ln.Peer
 	err := init_grpc_server(ln, port)
 	return err
 }
@@ -136,7 +140,7 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 	return nil
 }
 
-func (ln *Localnode) Lookup(k ID) (*Peer, error) {
+func (ln *Localnode) Lookup(k ID) (Peer, error) {
 	kShift, i := select_imaginary_node(k, ln.NodeAddr, ln.Successor.NodeAddr)
 
 	lookupPacket := &pd.LookupPacket{
@@ -148,12 +152,18 @@ func (ln *Localnode) Lookup(k ID) (*Peer, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	reply, err := ln.D.kc.LookupRPC(ctx, lookupPacket)
-	if err != nil {
-		return nil, err
-	}
+	reply := make(chan *pd.PeerPacket)
+	err := make(chan error)
 
-	return parse_peer_packet(reply), nil
+	go func(ln *Localnode) {
+		r, e := ln.LookupRPC(ctx, lookupPacket)
+		reply <- r
+		err <- e
+	}(ln)
+
+	r := <-reply
+	e := <-err
+	return parse_peer_packet(r), e
 }
 
 func (ln *Localnode) UpdateNeighbors() {}
@@ -202,8 +212,11 @@ func init_grpc_server(ln *Localnode, port int) error {
 }
 
 // parse_lookup_reply parses the pd.PeerPacket into a Peer struct
-func parse_peer_packet(reply *pd.PeerPacket) *Peer {
-	return &Peer{
+func parse_peer_packet(reply *pd.PeerPacket) Peer {
+	if reply == nil {
+		return Peer{}
+	}
+	return Peer{
 		NodeAddr: utils.ParseID(reply.SrcId),
 		NetAddr:  utils.ParseIP(reply.SrcIp),
 		Start:    utils.ParseID(reply.Start),
@@ -212,6 +225,9 @@ func parse_peer_packet(reply *pd.PeerPacket) *Peer {
 }
 
 func form_peer_packet(peer *Peer) *pd.PeerPacket {
+	if peer == nil {
+		return nil
+	}
 	return &pd.PeerPacket{
 		SrcId:    peer.NodeAddr.String(),
 		SrcIp:    peer.NetAddr.String(),
