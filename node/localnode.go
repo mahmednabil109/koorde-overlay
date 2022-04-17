@@ -45,7 +45,7 @@ func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.E
 /* Localnode API */
 
 // Init initializes the first node in the network
-// It inits the Successor, D pointers with default values (node itslef)
+// it inits the Successor, D pointers with default values (node itslef)
 func (ln *Localnode) Init(port int) error {
 	ln.NetAddr = &net.TCPAddr{IP: []byte{127, 0, 0, 1}, Port: port}
 	ln.NodeAddr = utils.SHA1OF(ln.NetAddr.String())
@@ -91,24 +91,27 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 	return nil
 }
 
-func (ln *Localnode) Lookup(id, idShift, iid ID) (*Peer, error) {
-	if id.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
+func (ln *Localnode) Lookup(k ID) (*Peer, error) {
+	kShift, i := select_imaginary_node(k, ln.NodeAddr, ln.Successor.NodeAddr)
+
+	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
 		return ln.Successor, nil
 	}
-	if iid.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
+	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
 		if ln.D.kc == nil {
+			// TODO handle failer and pointer replacemnet
 			ln.D.InitConnection()
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		_idShift, _ := idShift.LeftShift()
+		KShift, _ := kShift.LeftShift()
 		lookupPacket := &pd.LookupPacket{
-			SrcId:   ln.NodeAddr.String(),
-			SrcIp:   ln.NetAddr.String(),
-			Id:      id.String(),
-			IdShift: _idShift.String(),
-			Iid:     iid.TopShift(idShift).String()}
+			SrcId:  ln.NodeAddr.String(),
+			SrcIp:  ln.NetAddr.String(),
+			K:      k.String(),
+			KShift: KShift.String(),
+			I:      i.TopShift(kShift).String()}
 		reply, err := ln.D.kc.LookupRPC(ctx, lookupPacket)
 
 		if err != nil {
@@ -119,16 +122,17 @@ func (ln *Localnode) Lookup(id, idShift, iid ID) (*Peer, error) {
 	}
 
 	if ln.Successor.kc == nil {
+		// TODO handle failer and pointer replacemnet
 		ln.Successor.InitConnection()
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	lookupPacket := &pd.LookupPacket{
-		SrcId:   ln.NetAddr.String(),
-		SrcIp:   ln.NetAddr.String(),
-		Id:      id.String(),
-		IdShift: idShift.String(),
-		Iid:     iid.String()}
+		SrcId:  ln.NetAddr.String(),
+		SrcIp:  ln.NetAddr.String(),
+		K:      k.String(),
+		KShift: kShift.String(),
+		I:      i.String()}
 	reply, err := ln.Successor.kc.LookupRPC(ctx, lookupPacket)
 
 	if err != nil {
@@ -144,7 +148,28 @@ func (ln *Localnode) BroadCast()       {}
 
 /* Helper Methods */
 
-// init_grpc_server creates a tcp socket an registers
+// Select the best imaginary node to start the lookup from
+// that is in the range (m, m.Successor] in the ring
+func select_imaginary_node(k, m, successor ID) (ID, ID) {
+	_id := make([]byte, len(m))
+	copy(_id, m)
+
+	for i := 2*len(m) - 1; i >= 0; i-- {
+		_id = m.MaskLowerWith(k, i)
+
+		if ID(_id).InLXRange(m, successor) {
+			for j := 0; j < i; j++ {
+				k, _ = k.LeftShift()
+			}
+			return k, _id
+		}
+	}
+
+	// no Match
+	return k, ID(_id).AddOne()
+}
+
+// init_grpc_server creates a tcp socket and registers
 // a new grpc server for Localnode.s
 func init_grpc_server(ln *Localnode, port int) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

@@ -33,7 +33,7 @@ func main() {
 	log.Printf("%+v \n", n)
 
 	k := utils.ParseID("09b0ce42948043810a1f2cc7e7079aec7582f290")
-	res, _ := n.Lookup(k, k, n.NodeAddr)
+	res, _ := n.Lookup(k)
 	log.Printf("%+v", res)
 
 	sigs := make(chan os.Signal, 1)

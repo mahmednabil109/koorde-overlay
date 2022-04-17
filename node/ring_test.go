@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/mahmednabil109/koorde-overlay/utils"
@@ -111,5 +112,52 @@ func Test_topshift(t *testing.T) {
 
 	if !_id.Equal(a) {
 		t.Fatalf("after 40 topShifts the id must equal to the other one %v", _id)
+	}
+}
+
+func Test_addone(t *testing.T) {
+	cases := []struct {
+		id   ID
+		want string
+	}{
+		{utils.ParseID("a09b0ce42948043810a1f2cc7e7079aec7582f2f"), "a09b0ce42948043810a1f2cc7e7079aec7582f30"},
+		{id, "a09b0ce42948043810a1f2cc7e7079aec7582f2a"},
+		{b, "a09b0ce42948043810a1f2cc7e7079aec7583000"},
+		{_b, "0000000000000000000000000000000000000002"},
+		{MAX_ID, ZERO_ID.String()},
+	}
+
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("AddOne with %s", tt.id.String()), func(t *testing.T) {
+			res := tt.id.AddOne().String()
+
+			if tt.want != res {
+				t.Fatalf("add one faild: %s != %s", res, tt.want)
+			}
+		})
+	}
+}
+
+func Test_masklowerwith(t *testing.T) {
+	cases := []struct {
+		id, x ID
+		n     int
+		want  string
+	}{
+		{id, a, 0, "a09b0ce42948043810a1f2cc7e7079aec7582f29"},
+		{id, a, 2, "a09b0ce42948043810a1f2cc7e7079aec7582fa0"},
+		{id, a, 4, "a09b0ce42948043810a1f2cc7e7079aec758a09b"},
+		{id, a, 1, "a09b0ce42948043810a1f2cc7e7079aec7582f2a"},
+		{id, a, 3, "a09b0ce42948043810a1f2cc7e7079aec7582a09"},
+		{id, a, 5, "a09b0ce42948043810a1f2cc7e7079aec75a09b0"},
+	}
+
+	for _, tt := range cases {
+		t.Run(fmt.Sprintf("mask length %d", tt.n), func(t *testing.T) {
+			res := tt.id.MaskLowerWith(tt.x, tt.n).String()
+			if tt.want != res {
+				t.Fatalf("MaskLower bits dose not work correctly: %s != %s", res, tt.want)
+			}
+		})
 	}
 }

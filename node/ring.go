@@ -1,6 +1,10 @@
 package node
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+
+	"github.com/mahmednabil109/koorde-overlay/utils"
+)
 
 // Fixed Identifer space of 160 bits
 //* [Note] this works for hex base ids
@@ -64,6 +68,48 @@ func (id ID) LeftShift() (ID, byte) {
 func (id ID) TopShift(a ID) ID {
 	_id, _ := id.LeftShift()
 	_id[len(_id)-1] |= ((a[0] >> 0x04) & 0x0f)
+	return _id
+}
+
+// changes the lower i bits of id with the heighest i bits of x
+func (id ID) MaskLowerWith(x ID, i int) ID {
+	_id := make([]byte, len(id))
+	copy(_id, id)
+
+	if i%2 == 0 {
+		i /= 2
+		copy(_id[len(_id)-i:], x[:i])
+	} else {
+		i = i/2 + 1
+		_tmp := make([]byte, 0)
+
+		// get the higher digits from x
+		_tmp = append(_tmp, (x[0]>>0x04)&0x0f)
+		for j := 1; j < i; j++ {
+			_digit := (x[j-1] << 0x04) | (x[j] >> 0x04)
+			_tmp = append(_tmp, _digit)
+		}
+
+		// set the digits to the lower part of id
+		_id[len(_id)-len(_tmp)] &= 0xf0
+		_id[len(_id)-len(_tmp)] |= _tmp[0]
+
+		copy(_id[len(_id)-len(_tmp)+1:], _tmp[1:])
+	}
+	return _id
+}
+
+func (id ID) AddOne() ID {
+	var (
+		_id   []byte = make([]byte, len(id))
+		carry byte   = 1
+	)
+	copy(_id, id)
+
+	for i := len(id) - 1; i >= 0; i-- {
+		_id[i], carry = utils.Add8(_id[i], 0, carry)
+	}
+
 	return _id
 }
 
