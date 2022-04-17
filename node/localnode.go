@@ -35,11 +35,11 @@ func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPack
 	log.Printf("@=%+v,%+v", ln.NodeAddr, ln.Successor.NodeAddr)
 	log.Printf("inside %s in (%s %s] !!", k, ln.NodeAddr, ln.Successor.NodeAddr)
 	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
-		log.Println("Successor")
+		log.Printf("Successor || %s", ln.NetAddr)
 		return form_peer_packet(&ln.Successor), nil
 	}
 	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
-		log.Println("Forward")
+		log.Printf("Forward -> %s", ln.D.NetAddr)
 		if ln.D.kc == nil {
 			// TODO handle failer and pointer replacemnet
 			ln.D.InitConnection()
@@ -62,7 +62,7 @@ func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPack
 		}
 		return reply, nil
 	}
-	log.Println("Correction")
+	log.Printf("Correction -> %s", ln.Successor.NetAddr)
 	if ln.Successor.kc == nil {
 		// TODO handle failer and pointer replacemnet
 		ln.Successor.InitConnection()
@@ -89,6 +89,33 @@ func (ln *Localnode) UpdateNeighborRPC(ctx context.Context, e *pd.Empty) (*pd.Em
 
 func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.Empty, error) {
 	return &pd.Empty{}, nil
+}
+
+// DEBUG RPC
+
+func (n *Localnode) DSetSuccessor(ctx context.Context, p *pd.PeerPacket) (*pd.Empty, error) {
+	n.Successor = parse_peer_packet(p)
+	n.Successor.InitConnection()
+	return &pd.Empty{}, nil
+}
+
+func (n *Localnode) DSetD(ctx context.Context, p *pd.PeerPacket) (*pd.Empty, error) {
+	n.D = parse_peer_packet(p)
+	n.D.InitConnection()
+	return &pd.Empty{}, nil
+}
+
+func (n *Localnode) DGetID(ctx context.Context, e *pd.Empty) (*pd.PeerPacket, error) {
+	return &pd.PeerPacket{SrcId: n.NodeAddr.String()}, nil
+}
+
+func (n *Localnode) DGetPointers(ctx context.Context, e *pd.Empty) (*pd.Pointers, error) {
+	return &pd.Pointers{Succ: n.Successor.NodeAddr.String(), D: n.D.NodeAddr.String()}, nil
+}
+
+func (n *Localnode) DLKup(ctx context.Context, p *pd.PeerPacket) (*pd.PeerPacket, error) {
+	reply, err := n.Lookup(utils.ParseID(p.SrcId))
+	return form_peer_packet(&reply), err
 }
 
 /* Localnode API */

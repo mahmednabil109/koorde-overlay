@@ -23,6 +23,12 @@ type KoordeClient interface {
 	SuccessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
 	UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
+	// DEBUG RPCS
+	DSetSuccessor(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
+	DSetD(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
+	DGetID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
+	DGetPointers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Pointers, error)
+	DLKup(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*PeerPacket, error)
 }
 
 type koordeClient struct {
@@ -78,6 +84,51 @@ func (c *koordeClient) BroadCastRPC(ctx context.Context, in *BlockPacket, opts .
 	return out, nil
 }
 
+func (c *koordeClient) DSetSuccessor(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DSetSuccessor", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) DSetD(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DSetD", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) DGetID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error) {
+	out := new(PeerPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DGetID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) DGetPointers(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Pointers, error) {
+	out := new(Pointers)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DGetPointers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) DLKup(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*PeerPacket, error) {
+	out := new(PeerPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DLKup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KoordeServer is the server API for Koorde service.
 // All implementations must embed UnimplementedKoordeServer
 // for forward compatibility
@@ -87,6 +138,12 @@ type KoordeServer interface {
 	SuccessorRPC(context.Context, *Empty) (*PeerPacket, error)
 	UpdateNeigborRPC(context.Context, *Empty) (*Empty, error)
 	BroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
+	// DEBUG RPCS
+	DSetSuccessor(context.Context, *PeerPacket) (*Empty, error)
+	DSetD(context.Context, *PeerPacket) (*Empty, error)
+	DGetID(context.Context, *Empty) (*PeerPacket, error)
+	DGetPointers(context.Context, *Empty) (*Pointers, error)
+	DLKup(context.Context, *PeerPacket) (*PeerPacket, error)
 	mustEmbedUnimplementedKoordeServer()
 }
 
@@ -108,6 +165,21 @@ func (UnimplementedKoordeServer) UpdateNeigborRPC(context.Context, *Empty) (*Emp
 }
 func (UnimplementedKoordeServer) BroadCastRPC(context.Context, *BlockPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadCastRPC not implemented")
+}
+func (UnimplementedKoordeServer) DSetSuccessor(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DSetSuccessor not implemented")
+}
+func (UnimplementedKoordeServer) DSetD(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DSetD not implemented")
+}
+func (UnimplementedKoordeServer) DGetID(context.Context, *Empty) (*PeerPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DGetID not implemented")
+}
+func (UnimplementedKoordeServer) DGetPointers(context.Context, *Empty) (*Pointers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DGetPointers not implemented")
+}
+func (UnimplementedKoordeServer) DLKup(context.Context, *PeerPacket) (*PeerPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DLKup not implemented")
 }
 func (UnimplementedKoordeServer) mustEmbedUnimplementedKoordeServer() {}
 
@@ -212,6 +284,96 @@ func _Koorde_BroadCastRPC_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Koorde_DSetSuccessor_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DSetSuccessor(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DSetSuccessor",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DSetSuccessor(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_DSetD_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DSetD(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DSetD",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DSetD(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_DGetID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DGetID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DGetID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DGetID(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_DGetPointers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DGetPointers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DGetPointers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DGetPointers(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_DLKup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DLKup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DLKup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DLKup(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Koorde_ServiceDesc is the grpc.ServiceDesc for Koorde service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -238,6 +400,26 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BroadCastRPC",
 			Handler:    _Koorde_BroadCastRPC_Handler,
+		},
+		{
+			MethodName: "DSetSuccessor",
+			Handler:    _Koorde_DSetSuccessor_Handler,
+		},
+		{
+			MethodName: "DSetD",
+			Handler:    _Koorde_DSetD_Handler,
+		},
+		{
+			MethodName: "DGetID",
+			Handler:    _Koorde_DGetID_Handler,
+		},
+		{
+			MethodName: "DGetPointers",
+			Handler:    _Koorde_DGetPointers_Handler,
+		},
+		{
+			MethodName: "DLKup",
+			Handler:    _Koorde_DLKup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

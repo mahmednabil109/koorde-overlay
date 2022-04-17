@@ -4,42 +4,53 @@ package rpc;
 
 option go_package = "github.com/mahmednabil109/koorde-overlay/rpc";
 
-
 service Koorde {
-     rpc BootStarpRPC (BootStrapPacket) returns (BootStrapReply){}
-     rpc LookupRPC (LookupPacket) returns (PeerPacket) {}
-     rpc SuccessorRPC (Empty) returns (PeerPacket){}
-     rpc UpdateNeigborRPC (Empty) returns (Empty) {}
-     rpc BroadCastRPC (BlockPacket) returns (Empty) {}
+  rpc BootStarpRPC(BootStrapPacket) returns (BootStrapReply) {}
+  rpc LookupRPC(LookupPacket) returns (PeerPacket) {}
+  rpc SuccessorRPC(Empty) returns (PeerPacket) {}
+  rpc UpdateNeigborRPC(Empty) returns (Empty) {}
+  rpc BroadCastRPC(BlockPacket) returns (Empty) {}
+
+  // DEBUG RPCS
+  rpc DSetSuccessor(PeerPacket) returns (Empty) {}
+  rpc DSetD(PeerPacket) returns (Empty) {}
+  rpc DGetID(Empty) returns (PeerPacket) {}
+  rpc DGetPointers(Empty) returns (Pointers) {}
+  rpc DLKup(PeerPacket) returns (PeerPacket) {}
 }
 
+// DEBUG MSGs
+message Pointers {
+  string succ = 1;
+  string d = 2;
+}
+//
+
 message PeerPacket {
-     string src_id = 1;
-     string src_ip = 2;
-     string start = 3;
-     repeated string interval = 4;
+  string src_id = 1;
+  string src_ip = 2;
+  string start = 3;
+  repeated string interval = 4;
 }
 
 message LookupPacket {
-     string src_id = 1;
-     string src_ip = 2;
-     string k = 3;
-     string kShift = 4;
-     string i = 5;
+  string src_id = 1;
+  string src_ip = 2;
+  string k = 3;
+  string kShift = 4;
+  string i = 5;
 }
 
-message BlockPacket {
-
-}
+message BlockPacket {}
 
 message BootStrapPacket {
-     string src_id = 1;
-     string src_ip = 2;
+  string src_id = 1;
+  string src_ip = 2;
 }
 
 message BootStrapReply {
-     PeerPacket Successor = 1;
-     PeerPacket D = 2;
+  PeerPacket Successor = 1;
+  PeerPacket D = 2;
 }
 
 message Empty {}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -26,18 +27,20 @@ func main() {
 		if err != nil {
 			log.Printf("faild to init the localnode: %v", err)
 		}
+		f, err := os.Create(fmt.Sprintf("%s.log", n.NetAddr.String()))
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
+		log.SetOutput(f)
 	} else {
 		n.Join(utils.ParseIP(*bootstrap), *port)
 	}
 
 	log.Printf("%+v \n", n)
 
-	k := utils.ParseID("09b0ce42948043810a1f2cc7e7079aec7582f290")
-	res, _ := n.Lookup(k)
-	log.Printf("%+v", res)
-
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigs, syscall.SIGINT)
 	<-sigs
 
 	log.Printf("Programe ended")
