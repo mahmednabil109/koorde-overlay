@@ -13,6 +13,9 @@ var (
 	a  = ID(utils.ParseID("a09b0ce42948043810a1f2cc7e7079aec7582f20"))
 	b  = ID(utils.ParseID("a09b0ce42948043810a1f2cc7e7079aec7582fff"))
 	_b = ID(utils.ParseID("00000000000000000001"))
+	c  = ID(utils.ParseID("4818927895bba843f9b86cd89ab44f885a558f17"))
+	d  = ID(utils.ParseID("4818927895bba843f9b86cd89ab44f885a558f18"))
+	e  = ID(utils.ParseID("48b88659ffe9828f7f69ab99273bbbcad1b5bcc5"))
 )
 
 func Test_inlxrange(t *testing.T) {
@@ -60,6 +63,11 @@ func Test_inlxrange(t *testing.T) {
 	if !_b.InLXRange(ZERO_ID, ZERO_ID) {
 		t.Fatal("in closed ring all values must exists")
 	}
+
+	if !d.InLXRange(c, e) {
+		t.Fatal("in range but INXLRange returned false")
+	}
+
 }
 
 func Test_equal(t *testing.T) {
@@ -118,18 +126,23 @@ func Test_topshift(t *testing.T) {
 func Test_addone(t *testing.T) {
 	cases := []struct {
 		id   ID
+		from int
 		want string
 	}{
-		{utils.ParseID("a09b0ce42948043810a1f2cc7e7079aec7582f2f"), "a09b0ce42948043810a1f2cc7e7079aec7582f30"},
-		{id, "a09b0ce42948043810a1f2cc7e7079aec7582f2a"},
-		{b, "a09b0ce42948043810a1f2cc7e7079aec7583000"},
-		{_b, "0000000000000000000000000000000000000002"},
-		{MAX_ID, ZERO_ID.String()},
+		{utils.ParseID("a09b0ce42948043810a1f2cc7e7079aec7582f2f"), 0, "a09b0ce42948043810a1f2cc7e7079aec7582f30"},
+		{id, 0, "a09b0ce42948043810a1f2cc7e7079aec7582f2a"},
+		{b, 0, "a09b0ce42948043810a1f2cc7e7079aec7583000"},
+		{b, 2, "a09b0ce42948043810a1f2cc7e7079aec75830ff"},
+		{_b, 0, "0000000000000000000000000000000000000002"},
+		{MAX_ID, 0, ZERO_ID.String()},
+		{ZERO_ID, 0, "0000000000000000000000000000000000000001"},
+		{ZERO_ID, 1, "0000000000000000000000000000000000000010"},
+		{ZERO_ID, 2, "0000000000000000000000000000000000000100"},
 	}
 
 	for _, tt := range cases {
-		t.Run(fmt.Sprintf("AddOne with %s", tt.id.String()), func(t *testing.T) {
-			res := tt.id.AddOne().String()
+		t.Run(fmt.Sprintf("AddOne with %s from %d", tt.id.String(), tt.from), func(t *testing.T) {
+			res := tt.id.AddOne(tt.from).String()
 
 			if tt.want != res {
 				t.Fatalf("add one faild: %s != %s", res, tt.want)

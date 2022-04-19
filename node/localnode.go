@@ -33,11 +33,20 @@ func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPack
 	i := ID(utils.ParseID(lookupPacket.I))
 
 	log.Printf("@=%+v,%+v", ln.NodeAddr, ln.Successor.NodeAddr)
-	log.Printf("inside %s in (%s %s] !!", k, ln.NodeAddr, ln.Successor.NodeAddr)
+	log.Printf("first %s in (%s %s] %v !!", k, ln.NodeAddr, ln.Successor.NodeAddr, k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr))
+
+	if k.Equal(ln.NodeAddr) {
+		log.Printf("Me || %s", ln.NetAddr)
+		return form_peer_packet(&ln.Peer), nil
+	}
+
 	if k.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
 		log.Printf("Successor || %s", ln.NetAddr)
 		return form_peer_packet(&ln.Successor), nil
 	}
+
+	log.Printf("second %s in (%s %s] %v !!", i, ln.NodeAddr, ln.Successor.NodeAddr, i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr))
+
 	if i.InLXRange(ln.NodeAddr, ln.Successor.NodeAddr) {
 		log.Printf("Forward -> %s", ln.D.NetAddr)
 		if ln.D.kc == nil {
@@ -169,13 +178,14 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 
 func (ln *Localnode) Lookup(k ID) (Peer, error) {
 	kShift, i := select_imaginary_node(k, ln.NodeAddr, ln.Successor.NodeAddr)
+	log.Printf("init %s %s %s", k.String(), kShift.String(), i.String())
 
 	lookupPacket := &pd.LookupPacket{
 		SrcId:  ln.NodeAddr.String(),
 		SrcIp:  ln.NetAddr.String(),
 		K:      k.String(),
 		KShift: kShift.String(),
-		I:      i.TopShift(kShift).String()}
+		I:      i.String()}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -204,7 +214,7 @@ func (ln *Localnode) BroadCast()       {}
 func select_imaginary_node(k, m, successor ID) (ID, ID) {
 
 	for i := 2*len(m) - 1; i >= 0; i-- {
-		_id := m.MaskLowerWith(k, i)
+		_id := m.MaskLowerWith(k, i).AddOne(i)
 
 		if ID(_id).InLXRange(m, successor) {
 			for j := 0; j < i; j++ {
@@ -215,7 +225,7 @@ func select_imaginary_node(k, m, successor ID) (ID, ID) {
 	}
 
 	// no Match
-	return k, m.AddOne()
+	return k, m.AddOne(0)
 }
 
 // init_grpc_server creates a tcp socket and registers

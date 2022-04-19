@@ -99,15 +99,27 @@ func (id ID) MaskLowerWith(x ID, i int) ID {
 	return _id
 }
 
-func (id ID) AddOne() ID {
+// AddOne adds one starting from a specific digit and carrys up
+func (id ID) AddOne(from int) ID {
 	var (
 		_id   []byte = make([]byte, len(id))
 		carry byte   = 1
 	)
 	copy(_id, id)
 
-	for i := len(id) - 1; i >= 0; i-- {
+	// special case odd digits
+	if from%2 == 1 {
+		carry = 1 << 0x04
+	}
+
+	// start adding and carring if nessacery
+	for i := len(id) - 1 - from/2; i >= 0; i-- {
 		_id[i], carry = utils.Add8(_id[i], 0, carry)
+
+		// quick exit
+		if carry == 0 {
+			break
+		}
 	}
 
 	return _id

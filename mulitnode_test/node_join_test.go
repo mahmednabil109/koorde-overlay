@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"sort"
+	"sync"
 	"syscall"
 	"time"
 
@@ -58,22 +59,41 @@ func (n *nnode) Init() error {
 func main() {
 	nodes := make([]nnode, 0)
 
-	for i := 0; i < 100; i++ {
-		cmd := exec.Command("../bin/koorde-overlay", "-port", fmt.Sprintf("%d", 8080+i))
-		err := cmd.Start()
-		time.Sleep(1 * time.Second)
-		if err != nil {
-			panic(err)
-		}
+	const (
+		NODE_NUM    = 100
+		LOOKUPS_NUM = 10000
+	)
 
-		nodes = append(nodes, nnode{
-			Cmd:  cmd,
-			Port: 8080 + i,
-		})
+	// init the nodes paralle
+	var wg sync.WaitGroup
+	var nodes_mux sync.Mutex
 
-		// initConnection
-		nodes[i].Init()
+	for i := 0; i < NODE_NUM; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			cmd := exec.Command("../bin/koorde-overlay", "-port", fmt.Sprintf("%d", 8080+i))
+			err := cmd.Start()
+			time.Sleep(1 * time.Second)
+			if err != nil {
+				panic(err)
+			}
+
+			nodes_mux.Lock()
+			defer nodes_mux.Unlock()
+
+			nodes = append(nodes, nnode{
+				Cmd:  cmd,
+				Port: 8080 + i,
+			})
+
+			// initConnection
+			nodes[len(nodes)-1].Init()
+		}(i)
 	}
+
+	wg.Wait()
 
 	for i := range nodes {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -159,15 +179,15 @@ func main() {
 	}
 
 	pre := time.Now()
-	for k := 1; k < 1000; k++ {
+	for k := 0; k < LOOKUPS_NUM; k++ {
 
 		rand.Seed(time.Now().UnixNano())
-		i, j := rand.Intn(19), rand.Intn(19)
+		i, j := rand.Intn(NODE_NUM), rand.Intn(NODE_NUM)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		log.Printf("lookup from %s :%d -> %s :%d", nodes[i].ID, nodes[i].Port, nodes[j].ID, nodes[j].Port)
+		log.Printf("lookup %d from %s :%d -> %s :%d", k, nodes[i].ID, nodes[i].Port, nodes[j].ID, nodes[j].Port)
 		reply, err := nodes[i].KC.DLKup(ctx, &pd.PeerPacket{SrcId: nodes[j].ID})
 		if err != nil {
 			panic(err)
@@ -175,7 +195,7 @@ func main() {
 
 		log.Printf("lookup result: %+v", reply)
 	}
-	log.Printf("1000 lookups takes: %s", time.Since(pre))
+	log.Printf("%d lookups takes: %s", LOOKUPS_NUM, time.Since(pre))
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
