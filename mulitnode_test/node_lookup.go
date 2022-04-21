@@ -188,7 +188,7 @@ func main() {
 		rand.Seed(time.Now().UnixNano())
 		i, j := rand.Intn(NODE_NUM), rand.Intn(NODE_NUM)
 
-		go func(i, j int) {
+		go func(i, j, k int) {
 			defer lookup_wg.Done()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -201,7 +201,7 @@ func main() {
 			}
 
 			log.Printf("lookup result: %+v", reply)
-		}(i, j)
+		}(i, j, k)
 
 	}
 	lookup_wg.Wait()
