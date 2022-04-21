@@ -178,23 +178,34 @@ func main() {
 		log.Printf("%s => %s ** %s", nodes[i].ID, res.Succ, res.D)
 	}
 
+	// make concurrent lookups
+	var lookup_wg sync.WaitGroup
+
 	pre := time.Now()
 	for k := 0; k < LOOKUPS_NUM; k++ {
+		lookup_wg.Add(1)
 
 		rand.Seed(time.Now().UnixNano())
 		i, j := rand.Intn(NODE_NUM), rand.Intn(NODE_NUM)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+		go func(i, j int) {
+			defer lookup_wg.Done()
 
-		log.Printf("lookup %d from %s :%d -> %s :%d", k, nodes[i].ID, nodes[i].Port, nodes[j].ID, nodes[j].Port)
-		reply, err := nodes[i].KC.DLKup(ctx, &pd.PeerPacket{SrcId: nodes[j].ID})
-		if err != nil {
-			panic(err)
-		}
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
 
-		log.Printf("lookup result: %+v", reply)
+			log.Printf("lookup %d from %s :%d -> %s :%d", k, nodes[i].ID, nodes[i].Port, nodes[j].ID, nodes[j].Port)
+			reply, err := nodes[i].KC.DLKup(ctx, &pd.PeerPacket{SrcId: nodes[j].ID})
+			if err != nil {
+				panic(err)
+			}
+
+			log.Printf("lookup result: %+v", reply)
+		}(i, j)
+
 	}
+	lookup_wg.Wait()
+
 	log.Printf("%d lookups takes: %s", LOOKUPS_NUM, time.Since(pre))
 
 	sigs := make(chan os.Signal, 1)
