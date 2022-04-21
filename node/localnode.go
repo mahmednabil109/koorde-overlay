@@ -13,11 +13,13 @@ import (
 )
 
 type Localnode struct {
-	Peer
-	D         Peer
-	Successor Peer
-	s         *grpc.Server
 	pd.UnimplementedKoordeServer
+	Peer
+	D            Peer
+	DPredecessor []Peer
+	Successor    Peer
+	Predecessor  Peer
+	s            *grpc.Server
 }
 
 /* RPC impelementation */
@@ -137,6 +139,8 @@ func (ln *Localnode) Init(port int) error {
 	ln.Start = ln.NodeAddr
 	ln.Interval = []ID{ln.NodeAddr, ln.NodeAddr}
 	ln.Successor = ln.Peer
+	ln.Predecessor = ln.Peer
+	ln.DPredecessor = []Peer{ln.Peer}
 	ln.D = ln.Peer
 	err := init_grpc_server(ln, port)
 	return err
@@ -158,7 +162,8 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 
 	bootstrapPacket := &pd.BootStrapPacket{
 		SrcId: ln.NodeAddr.String(),
-		SrcIp: ln.NetAddr.String()}
+		SrcIp: ln.NetAddr.String(),
+	}
 	bootstrapReply, err := peer.kc.BootStarpRPC(ctx, bootstrapPacket)
 	if err != nil {
 		log.Fatalf("cannot bootstrap: %v", err)
@@ -223,7 +228,6 @@ func select_imaginary_node(k, m, successor ID) (ID, ID) {
 			return k, _id
 		}
 	}
-
 	// no Match
 	return k, m.AddOne(0)
 }
