@@ -20,10 +20,20 @@ const _ = grpc.SupportPackageIsVersion7
 type KoordeClient interface {
 	BootStarpRPC(ctx context.Context, in *BootStrapPacket, opts ...grpc.CallOption) (*BootStrapReply, error)
 	LookupRPC(ctx context.Context, in *LookupPacket, opts ...grpc.CallOption) (*PeerPacket, error)
-	SuccessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
+	GetSuccessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
+	GetPredecessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
+	// UpdatePredecessor takes new pred and returns the old one
+	UpdatePredecessorRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*PeerPacket, error)
+	// UpdateSuccessor takes new succ and retursn the Dpointer parents that the
+	// new node should contact
+	UpdateSuccessorRPC(ctx context.Context, in *PeerListPacket, opts ...grpc.CallOption) (*PeerListPacket, error)
+	// UpdateDPointer updates the Dpointer with new successor that should handel
+	UpdateDPointerRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
+	AddDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
 	// DEBUG RPCS
+	DJoin(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetSuccessor(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetD(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DGetID(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error)
@@ -57,9 +67,54 @@ func (c *koordeClient) LookupRPC(ctx context.Context, in *LookupPacket, opts ...
 	return out, nil
 }
 
-func (c *koordeClient) SuccessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error) {
+func (c *koordeClient) GetSuccessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error) {
 	out := new(PeerPacket)
-	err := c.cc.Invoke(ctx, "/rpc.Koorde/SuccessorRPC", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/GetSuccessorRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) GetPredecessorRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*PeerPacket, error) {
+	out := new(PeerPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/GetPredecessorRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) UpdatePredecessorRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*PeerPacket, error) {
+	out := new(PeerPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/UpdatePredecessorRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) UpdateSuccessorRPC(ctx context.Context, in *PeerListPacket, opts ...grpc.CallOption) (*PeerListPacket, error) {
+	out := new(PeerListPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/UpdateSuccessorRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) UpdateDPointerRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/UpdateDPointerRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) AddDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/AddDParentRPC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +133,15 @@ func (c *koordeClient) UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...
 func (c *koordeClient) BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rpc.Koorde/BroadCastRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) DJoin(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DJoin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,10 +199,20 @@ func (c *koordeClient) DLKup(ctx context.Context, in *PeerPacket, opts ...grpc.C
 type KoordeServer interface {
 	BootStarpRPC(context.Context, *BootStrapPacket) (*BootStrapReply, error)
 	LookupRPC(context.Context, *LookupPacket) (*PeerPacket, error)
-	SuccessorRPC(context.Context, *Empty) (*PeerPacket, error)
+	GetSuccessorRPC(context.Context, *Empty) (*PeerPacket, error)
+	GetPredecessorRPC(context.Context, *Empty) (*PeerPacket, error)
+	// UpdatePredecessor takes new pred and returns the old one
+	UpdatePredecessorRPC(context.Context, *PeerPacket) (*PeerPacket, error)
+	// UpdateSuccessor takes new succ and retursn the Dpointer parents that the
+	// new node should contact
+	UpdateSuccessorRPC(context.Context, *PeerListPacket) (*PeerListPacket, error)
+	// UpdateDPointer updates the Dpointer with new successor that should handel
+	UpdateDPointerRPC(context.Context, *PeerPacket) (*Empty, error)
+	AddDParentRPC(context.Context, *PeerPacket) (*Empty, error)
 	UpdateNeigborRPC(context.Context, *Empty) (*Empty, error)
 	BroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
 	// DEBUG RPCS
+	DJoin(context.Context, *PeerPacket) (*Empty, error)
 	DSetSuccessor(context.Context, *PeerPacket) (*Empty, error)
 	DSetD(context.Context, *PeerPacket) (*Empty, error)
 	DGetID(context.Context, *Empty) (*PeerPacket, error)
@@ -157,14 +231,32 @@ func (UnimplementedKoordeServer) BootStarpRPC(context.Context, *BootStrapPacket)
 func (UnimplementedKoordeServer) LookupRPC(context.Context, *LookupPacket) (*PeerPacket, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LookupRPC not implemented")
 }
-func (UnimplementedKoordeServer) SuccessorRPC(context.Context, *Empty) (*PeerPacket, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SuccessorRPC not implemented")
+func (UnimplementedKoordeServer) GetSuccessorRPC(context.Context, *Empty) (*PeerPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSuccessorRPC not implemented")
+}
+func (UnimplementedKoordeServer) GetPredecessorRPC(context.Context, *Empty) (*PeerPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPredecessorRPC not implemented")
+}
+func (UnimplementedKoordeServer) UpdatePredecessorRPC(context.Context, *PeerPacket) (*PeerPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePredecessorRPC not implemented")
+}
+func (UnimplementedKoordeServer) UpdateSuccessorRPC(context.Context, *PeerListPacket) (*PeerListPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSuccessorRPC not implemented")
+}
+func (UnimplementedKoordeServer) UpdateDPointerRPC(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateDPointerRPC not implemented")
+}
+func (UnimplementedKoordeServer) AddDParentRPC(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddDParentRPC not implemented")
 }
 func (UnimplementedKoordeServer) UpdateNeigborRPC(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNeigborRPC not implemented")
 }
 func (UnimplementedKoordeServer) BroadCastRPC(context.Context, *BlockPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadCastRPC not implemented")
+}
+func (UnimplementedKoordeServer) DJoin(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DJoin not implemented")
 }
 func (UnimplementedKoordeServer) DSetSuccessor(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DSetSuccessor not implemented")
@@ -230,20 +322,110 @@ func _Koorde_LookupRPC_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Koorde_SuccessorRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Koorde_GetSuccessorRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(KoordeServer).SuccessorRPC(ctx, in)
+		return srv.(KoordeServer).GetSuccessorRPC(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/rpc.Koorde/SuccessorRPC",
+		FullMethod: "/rpc.Koorde/GetSuccessorRPC",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KoordeServer).SuccessorRPC(ctx, req.(*Empty))
+		return srv.(KoordeServer).GetSuccessorRPC(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_GetPredecessorRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).GetPredecessorRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/GetPredecessorRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).GetPredecessorRPC(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_UpdatePredecessorRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).UpdatePredecessorRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/UpdatePredecessorRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).UpdatePredecessorRPC(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_UpdateSuccessorRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerListPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).UpdateSuccessorRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/UpdateSuccessorRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).UpdateSuccessorRPC(ctx, req.(*PeerListPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_UpdateDPointerRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).UpdateDPointerRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/UpdateDPointerRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).UpdateDPointerRPC(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_AddDParentRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).AddDParentRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/AddDParentRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).AddDParentRPC(ctx, req.(*PeerPacket))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -280,6 +462,24 @@ func _Koorde_BroadCastRPC_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KoordeServer).BroadCastRPC(ctx, req.(*BlockPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_DJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DJoin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DJoin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DJoin(ctx, req.(*PeerPacket))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -390,8 +590,28 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Koorde_LookupRPC_Handler,
 		},
 		{
-			MethodName: "SuccessorRPC",
-			Handler:    _Koorde_SuccessorRPC_Handler,
+			MethodName: "GetSuccessorRPC",
+			Handler:    _Koorde_GetSuccessorRPC_Handler,
+		},
+		{
+			MethodName: "GetPredecessorRPC",
+			Handler:    _Koorde_GetPredecessorRPC_Handler,
+		},
+		{
+			MethodName: "UpdatePredecessorRPC",
+			Handler:    _Koorde_UpdatePredecessorRPC_Handler,
+		},
+		{
+			MethodName: "UpdateSuccessorRPC",
+			Handler:    _Koorde_UpdateSuccessorRPC_Handler,
+		},
+		{
+			MethodName: "UpdateDPointerRPC",
+			Handler:    _Koorde_UpdateDPointerRPC_Handler,
+		},
+		{
+			MethodName: "AddDParentRPC",
+			Handler:    _Koorde_AddDParentRPC_Handler,
 		},
 		{
 			MethodName: "UpdateNeigborRPC",
@@ -400,6 +620,10 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BroadCastRPC",
 			Handler:    _Koorde_BroadCastRPC_Handler,
+		},
+		{
+			MethodName: "DJoin",
+			Handler:    _Koorde_DJoin_Handler,
 		},
 		{
 			MethodName: "DSetSuccessor",
