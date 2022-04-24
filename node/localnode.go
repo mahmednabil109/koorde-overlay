@@ -131,7 +131,6 @@ func (ln *Localnode) UpdateSuccessorRPC(bctx context.Context, p *pd.PeerListPack
 	// slice of the pointers to hand out
 	pointers := make([]*pd.PeerPacket, 0)
 	for _, n := range ln.DParents {
-		// ! NEED FIX
 		D_id, _ := n.NodeAddr.LeftShift()
 		if D_id.InLXRange(ln.Successor.NodeAddr, Succ_id) {
 			pointers = append(pointers, form_peer_packet(&n))

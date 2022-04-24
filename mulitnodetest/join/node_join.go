@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"sort"
+	"sync"
 	"syscall"
 	"time"
 
@@ -20,12 +21,19 @@ import (
 func main() {
 	// test constants
 	const (
-		NODE_NUM = 100
+		NODE_NUM = 20
 	)
 
 	nodes := make([]u.Nnode, 0)
 
+	// make concurrent joins :)
+	// var wg sync.WaitGroup
+	// var nodes_mux sync.Mutex
+
 	for i := 0; i < NODE_NUM; i++ {
+		// wg.Add(1)
+		// go func(i int) {
+		// defer wg.Done()
 
 		cmd := exec.Command("../../bin/koorde-overlay",
 			"-port", fmt.Sprintf("%d", 8080+i),
@@ -37,12 +45,17 @@ func main() {
 		}
 		time.Sleep(time.Second)
 
+		// nodes_mux.Lock()
+		// defer nodes_mux.Unlock()
 		nodes = append(nodes, u.Nnode{
 			Cmd:  cmd,
 			Port: 8080 + i,
 		})
-		nodes[i].Init()
+		nodes[len(nodes)-1].Init()
+		// }(i)
 	}
+	// wg.Wait()
+	// time.Sleep(time.Second)
 
 	for i := 0; i < NODE_NUM; i++ {
 		log.Print(node.ID(utils.SHA1OF(fmt.Sprintf("127.0.0.1:%d", 8080+i))).String())
@@ -62,58 +75,77 @@ func main() {
 	sort.Sort(&u.NodeStore{N: nodes})
 
 	// check the successors
-	for i := range nodes {
-		next_i := i + 1
-		if i == len(nodes)-1 {
-			next_i = 0
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		reply, err := nodes[i].KC.GetSuccessorRPC(ctx, &pd.Empty{})
-		if err != nil {
-			panic(err)
-		}
+	// concurrent
+	var succ_wg sync.WaitGroup
 
-		log.Printf("%s -> %s & %s %v",
-			nodes[i].ID,
-			nodes[next_i].ID,
-			reply.SrcId,
-			reply.SrcId == nodes[next_i].ID)
+	for i := range nodes {
+		succ_wg.Add(1)
+
+		go func(i int) {
+			defer succ_wg.Done()
+
+			next_i := i + 1
+			if i == len(nodes)-1 {
+				next_i = 0
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			reply, err := nodes[i].KC.GetSuccessorRPC(ctx, &pd.Empty{})
+			if err != nil {
+				panic(err)
+			}
+
+			log.Printf("%s -> %s & %s %v",
+				nodes[i].ID,
+				nodes[next_i].ID,
+				reply.SrcId,
+				reply.SrcId == nodes[next_i].ID)
+		}(i)
 	}
+	succ_wg.Wait()
 
 	// check the D pointers
+	// concurrent
+	var d_wg sync.WaitGroup
+
 	for i := range nodes {
-		N_id := node.ID(utils.ParseID(nodes[i].ID))
-		D_id, _ := N_id.LeftShift()
+		d_wg.Add(1)
 
-		for j := range nodes {
-			var nnn u.Nnode
-			if j == len(nodes)-1 {
-				nnn = nodes[0]
-			} else {
-				nnn = nodes[j+1]
-			}
+		go func(i int) {
+			defer d_wg.Done()
+			N_id := node.ID(utils.ParseID(nodes[i].ID))
+			D_id, _ := N_id.LeftShift()
 
-			C_id := node.ID(utils.ParseID(nodes[j].ID))
-			NNN_id := node.ID(utils.ParseID(nnn.ID))
-
-			if D_id.InLXRange(C_id, NNN_id) {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancel()
-
-				reply, err := nodes[i].KC.DGetPointers(ctx, &pd.Empty{})
-				if err != nil {
-					panic(err)
+			for j := range nodes {
+				var nnn u.Nnode
+				if j == len(nodes)-1 {
+					nnn = nodes[0]
+				} else {
+					nnn = nodes[j+1]
 				}
 
-				log.Printf("%s ** %s & %s %v",
-					nodes[i].ID,
-					nodes[j].ID,
-					reply.D,
-					reply.D == nodes[j].ID)
+				C_id := node.ID(utils.ParseID(nodes[j].ID))
+				NNN_id := node.ID(utils.ParseID(nnn.ID))
+
+				if D_id.InLXRange(C_id, NNN_id) {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancel()
+
+					reply, err := nodes[i].KC.DGetPointers(ctx, &pd.Empty{})
+					if err != nil {
+						panic(err)
+					}
+
+					log.Printf("%s ** %s & %s %v",
+						nodes[i].ID,
+						nodes[j].ID,
+						reply.D,
+						reply.D == nodes[j].ID)
+				}
 			}
-		}
+		}(i)
 	}
+	d_wg.Wait()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
