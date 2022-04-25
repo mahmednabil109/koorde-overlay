@@ -10,6 +10,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var (
+	retryPolicy = `{
+		"methodConfig": [{
+		  "name": [{"service": "grpc.examples.echo.Echo"}],
+		  "waitForReady": true,
+		  "retryPolicy": {
+			  "MaxAttempts": 4,
+			  "InitialBackoff": ".01s",
+			  "MaxBackoff": ".01s",
+			  "BackoffMultiplier": 1.0,
+			  "RetryableStatusCodes": [ "UNAVAILABLE" ]
+		  }
+		}]}`
+)
+
 type NodeStore struct {
 	N []Nnode
 }
@@ -35,7 +50,11 @@ type Nnode struct {
 
 func (n *Nnode) Init() error {
 
-	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", n.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		fmt.Sprintf("127.0.0.1:%d", n.Port),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(retryPolicy))
+
 	if err != nil {
 		log.Fatalf("can't dial: %v", err)
 		return err

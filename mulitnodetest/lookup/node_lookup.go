@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -19,25 +20,30 @@ import (
 	"github.com/mahmednabil109/koorde-overlay/utils"
 )
 
+var (
+	NODE_NUM    = flag.Int("node-num", 100, "number of nodes in the system")
+	LOOKUPS_NUM = flag.Int("lookups", 10000, "number of lookups to test with")
+)
+
 func main() {
 	nodes := make([]u.Nnode, 0)
-
-	const (
-		NODE_NUM    = 100
-		LOOKUPS_NUM = 10000
-	)
 
 	// init the nodes paralle
 	var wg sync.WaitGroup
 	var nodes_mux sync.Mutex
 
-	for i := 0; i < NODE_NUM; i++ {
+	for i := 0; i < *NODE_NUM; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 
 			cmd := exec.Command("../../bin/koorde-overlay", "-port", fmt.Sprintf("%d", 8080+i))
-			err := cmd.Start()
+			f, err := os.Create(fmt.Sprintf("%d.err.log", 8080+i))
+			if err != nil {
+				panic(err)
+			}
+			cmd.Stderr = f
+			err = cmd.Start()
 			time.Sleep(1 * time.Second)
 			if err != nil {
 				panic(err)
@@ -52,14 +58,17 @@ func main() {
 			})
 
 			// initConnection
-			nodes[len(nodes)-1].Init()
+			err = nodes[len(nodes)-1].Init()
+			if err != nil {
+				panic(err)
+			}
+
 		}(i)
 	}
-
 	wg.Wait()
 
 	for i := range nodes {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 		defer cancel()
 
 		peer, err := nodes[i].KC.DGetID(ctx, &pd.Empty{})
@@ -145,16 +154,17 @@ func main() {
 	var lookup_wg sync.WaitGroup
 
 	pre := time.Now()
-	for k := 0; k < LOOKUPS_NUM; k++ {
+	for k := 0; k < *LOOKUPS_NUM; k++ {
 		lookup_wg.Add(1)
 
 		rand.Seed(time.Now().UnixNano())
-		i, j := rand.Intn(NODE_NUM), rand.Intn(NODE_NUM)
+		i, j := rand.Intn(*NODE_NUM), rand.Intn(*NODE_NUM)
 
 		go func(i, j, k int) {
 			defer lookup_wg.Done()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			pre := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
 
 			log.Printf("lookup %d from %s :%d -> %s :%d", k, nodes[i].ID, nodes[i].Port, nodes[j].ID, nodes[j].Port)
@@ -163,13 +173,13 @@ func main() {
 				panic(err)
 			}
 
-			log.Printf("lookup result: %+v", reply)
+			log.Printf("lookup %d result: %v hi in %v", k, reply.SrcId, time.Since(pre))
 		}(i, j, k)
 
 	}
 	lookup_wg.Wait()
 
-	log.Printf("%d lookups takes: %s", LOOKUPS_NUM, time.Since(pre))
+	log.Printf("%d lookups takes: %s", *LOOKUPS_NUM, time.Since(pre))
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

@@ -28,7 +28,7 @@ func randInt(min, max int) int {
 	return min + rand.Intn(max-min)
 }
 
-// TODO #1 denug multi node in same memory space
+// TODO #1 debug multi node in same memory space
 func Test_lookup(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 
@@ -85,9 +85,9 @@ func construct_simple_network(network_ports []int) (nodes []Localnode, err error
 	// inits the Successor pointer
 	for i := range nodes {
 		if i == len(nodes)-1 {
-			nodes[i].Successor = nodes[0].Peer
+			nodes[i].Successor = &nodes[0].Peer
 		} else {
-			nodes[i].Successor = nodes[i+1].Peer
+			nodes[i].Successor = &nodes[i+1].Peer
 		}
 		nodes[i].Successor.InitConnection()
 	}
@@ -103,7 +103,7 @@ func construct_simple_network(network_ports []int) (nodes []Localnode, err error
 				next_nn = nodes[i+1]
 			}
 			if D_id.InLXRange(nn.NodeAddr, next_nn.NodeAddr) {
-				n.D = nn.Peer
+				n.D = &nn.Peer
 				break
 			}
 		}

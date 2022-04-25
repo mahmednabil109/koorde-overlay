@@ -27,6 +27,10 @@ func (id ID) InLXRange(a, b ID) bool {
 	}
 }
 
+func (id ID) InLRXRange(a, b ID) bool {
+	return id.InLXRange(a, b) && !id.Equal(b)
+}
+
 // checks that id is befor a in the ring
 func (id ID) Less(a ID) bool {
 	if len(id) == len(a) {

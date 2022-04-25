@@ -36,15 +36,16 @@ func main() {
 	if *first == 0 {
 		log.Println("start to join")
 		n.Join(utils.ParseIP(*bootstrap), *port)
-		log.Printf("nodeID %s", n.NodeAddr.String())
-		log.Printf("Successor %s", n.Successor.NodeAddr.String())
-		log.Printf("D %s", n.D.NodeAddr.String())
-		log.Printf("Predecessor %s", n.Predecessor.NodeAddr.String())
+		log.Printf("nodeID %v", n)
+		log.Printf("Successor %v", n.Successor)
+		log.Printf("D %v", n.D)
+		log.Printf("Predecessor %v", n.Predecessor)
 	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT)
 	<-sigs
 
+	// n.NodeShutdown <- true
 	log.Printf("Programe ended")
 }

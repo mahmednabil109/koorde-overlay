@@ -28,8 +28,10 @@ type KoordeClient interface {
 	// new node should contact
 	UpdateSuccessorRPC(ctx context.Context, in *PeerListPacket, opts ...grpc.CallOption) (*PeerListPacket, error)
 	// UpdateDPointer updates the Dpointer with new successor that should handel
+	NotifyRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	UpdateDPointerRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	AddDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
+	RemoveDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
 	// DEBUG RPCS
@@ -103,6 +105,15 @@ func (c *koordeClient) UpdateSuccessorRPC(ctx context.Context, in *PeerListPacke
 	return out, nil
 }
 
+func (c *koordeClient) NotifyRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/NotifyRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *koordeClient) UpdateDPointerRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rpc.Koorde/UpdateDPointerRPC", in, out, opts...)
@@ -115,6 +126,15 @@ func (c *koordeClient) UpdateDPointerRPC(ctx context.Context, in *PeerPacket, op
 func (c *koordeClient) AddDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rpc.Koorde/AddDParentRPC", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *koordeClient) RemoveDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/RemoveDParentRPC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -207,8 +227,10 @@ type KoordeServer interface {
 	// new node should contact
 	UpdateSuccessorRPC(context.Context, *PeerListPacket) (*PeerListPacket, error)
 	// UpdateDPointer updates the Dpointer with new successor that should handel
+	NotifyRPC(context.Context, *PeerPacket) (*Empty, error)
 	UpdateDPointerRPC(context.Context, *PeerPacket) (*Empty, error)
 	AddDParentRPC(context.Context, *PeerPacket) (*Empty, error)
+	RemoveDParentRPC(context.Context, *PeerPacket) (*Empty, error)
 	UpdateNeigborRPC(context.Context, *Empty) (*Empty, error)
 	BroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
 	// DEBUG RPCS
@@ -243,11 +265,17 @@ func (UnimplementedKoordeServer) UpdatePredecessorRPC(context.Context, *PeerPack
 func (UnimplementedKoordeServer) UpdateSuccessorRPC(context.Context, *PeerListPacket) (*PeerListPacket, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateSuccessorRPC not implemented")
 }
+func (UnimplementedKoordeServer) NotifyRPC(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NotifyRPC not implemented")
+}
 func (UnimplementedKoordeServer) UpdateDPointerRPC(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDPointerRPC not implemented")
 }
 func (UnimplementedKoordeServer) AddDParentRPC(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddDParentRPC not implemented")
+}
+func (UnimplementedKoordeServer) RemoveDParentRPC(context.Context, *PeerPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveDParentRPC not implemented")
 }
 func (UnimplementedKoordeServer) UpdateNeigborRPC(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNeigborRPC not implemented")
@@ -394,6 +422,24 @@ func _Koorde_UpdateSuccessorRPC_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Koorde_NotifyRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).NotifyRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/NotifyRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).NotifyRPC(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Koorde_UpdateDPointerRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PeerPacket)
 	if err := dec(in); err != nil {
@@ -426,6 +472,24 @@ func _Koorde_AddDParentRPC_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KoordeServer).AddDParentRPC(ctx, req.(*PeerPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_RemoveDParentRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeerPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).RemoveDParentRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/RemoveDParentRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).RemoveDParentRPC(ctx, req.(*PeerPacket))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -606,12 +670,20 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Koorde_UpdateSuccessorRPC_Handler,
 		},
 		{
+			MethodName: "NotifyRPC",
+			Handler:    _Koorde_NotifyRPC_Handler,
+		},
+		{
 			MethodName: "UpdateDPointerRPC",
 			Handler:    _Koorde_UpdateDPointerRPC_Handler,
 		},
 		{
 			MethodName: "AddDParentRPC",
 			Handler:    _Koorde_AddDParentRPC_Handler,
+		},
+		{
+			MethodName: "RemoveDParentRPC",
+			Handler:    _Koorde_RemoveDParentRPC_Handler,
 		},
 		{
 			MethodName: "UpdateNeigborRPC",

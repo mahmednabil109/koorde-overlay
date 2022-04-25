@@ -15,8 +15,10 @@ service Koorde {
   // new node should contact
   rpc UpdateSuccessorRPC(PeerListPacket) returns (PeerListPacket) {}
   // UpdateDPointer updates the Dpointer with new successor that should handel
+  rpc NotifyRPC(PeerPacket) returns (Empty) {}
   rpc UpdateDPointerRPC(PeerPacket) returns (Empty) {}
   rpc AddDParentRPC(PeerPacket) returns (Empty) {}
+  rpc RemoveDParentRPC(PeerPacket) returns (Empty) {}
   rpc UpdateNeigborRPC(Empty) returns (Empty) {}
   rpc BroadCastRPC(BlockPacket) returns (Empty) {}
 

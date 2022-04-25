@@ -21,6 +21,10 @@ func (_ip _IP) Parse() []byte {
 }
 
 func ParseID(id string) []byte {
+	if len(id) == 0 {
+		return nil
+	}
+
 	d, _ := hex.DecodeString(id)
 	if len(d) < 20 {
 		return append(make([]byte, 20-len(d)), d...)
@@ -29,6 +33,10 @@ func ParseID(id string) []byte {
 }
 
 func ParseIP(ip string) *net.TCPAddr {
+	if len(ip) == 0 {
+		return nil
+	}
+
 	tokens := strings.Split(ip, ":")
 	port, _ := strconv.Atoi(tokens[1])
 
