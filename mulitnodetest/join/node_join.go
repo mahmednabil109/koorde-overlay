@@ -165,7 +165,8 @@ func main() {
 	// 	}
 	// }()
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(30 * time.Second)
+	log.Println("Start the lookups")
 
 	pre := time.Now()
 	var lookup_wg sync.WaitGroup
@@ -179,6 +180,7 @@ func main() {
 		go func(i, j, k int) {
 			defer lookup_wg.Done()
 
+			pre := time.Now()
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancel()
 
@@ -188,7 +190,7 @@ func main() {
 				panic(err)
 			}
 
-			log.Printf("lookup result: %+v %v", reply, reply.SrcId == nodes[j].ID)
+			log.Printf("lookup %d result: %v %v hi in %v", k, reply.SrcId, reply.SrcId == nodes[j].ID, time.Since(pre))
 		}(i, j, k)
 	}
 
