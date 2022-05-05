@@ -192,11 +192,28 @@ func (ln *Localnode) NotifyRPC(ctx context.Context, p *pd.PeerPacket) (*pd.Empty
 	return &pd.Empty{}, nil
 }
 
-func (ln *Localnode) UpdateNeighborRPC(ctx context.Context, e *pd.Empty) (*pd.Empty, error) {
-	return &pd.Empty{}, nil
-}
-
 func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.Empty, error) {
+	// TODO notify the consensus code
+
+	LimitID := ID(utils.ParseID(b.Limit))
+
+	if !ln.Successor.NodeAddr.Equal(ln.D.NodeAddr) && ln.Successor.NodeAddr.InLRXRange(ln.NodeAddr, LimitID) {
+		NewLimit := b.Limit
+		if ln.D.NodeAddr.InLRXRange(ln.NodeAddr, LimitID) {
+			NewLimit = ln.D.NodeAddr.String()
+		}
+
+		err := ln.Successor.InitConnection()
+		if err != nil {
+			return nil, err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
+		defer cancel()
+		_, err = ln.Successor.kc.BroadCastRPC(ctx, &pd.BlockPacket{Limit: NewLimit, Info: b.Info})
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &pd.Empty{}, nil
 }
 
@@ -211,6 +228,12 @@ func (ln *Localnode) GetPredecessorRPC(ctx context.Context, e *pd.Empty) (*pd.Pe
 }
 
 /* DEBUG RPC */
+
+func (n *Localnode) InitBroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.Empty, error) {
+	err := n.BroadCast(b.Info)
+
+	return &pd.Empty{}, err
+}
 
 func (n *Localnode) DJoin(ctx context.Context, p *pd.PeerPacket) (*pd.Empty, error) {
 	// Debug ports
@@ -351,9 +374,41 @@ func (ln *Localnode) Lookup(k ID) (*Peer, error) {
 	return parse_peer_packet(reply), err
 }
 
-func (ln *Localnode) UpdateNeighbors() {}
-func (ln *Localnode) UpdateOthers()    {}
-func (ln *Localnode) BroadCast()       {}
+func (ln *Localnode) BroadCast(info string) error {
+	if !ln.Successor.NodeAddr.Equal(ln.D.NodeAddr) {
+		err := ln.Successor.InitConnection()
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
+		defer cancel()
+		_, err = ln.Successor.kc.BroadCastRPC(ctx, &pd.BlockPacket{Limit: ln.D.NodeAddr.String(), Info: info})
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+	}
+
+	err := ln.D.InitConnection()
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
+	defer cancel()
+	_, err = ln.D.kc.BroadCastRPC(ctx, &pd.BlockPacket{Limit: ln.NodeAddr.String()})
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	return nil
+
+}
+
 func (ln *Localnode) stablize() {
 	log.Println("stablize")
 	if ln.Successor == nil {
@@ -396,6 +451,7 @@ func (ln *Localnode) stablize() {
 		log.Fatal(err)
 	}
 }
+
 func (ln *Localnode) fixPointers() {
 	log.Println("fix poniter")
 

@@ -19,10 +19,10 @@ service Koorde {
   rpc UpdateDPointerRPC(PeerPacket) returns (Empty) {}
   rpc AddDParentRPC(PeerPacket) returns (Empty) {}
   rpc RemoveDParentRPC(PeerPacket) returns (Empty) {}
-  rpc UpdateNeigborRPC(Empty) returns (Empty) {}
   rpc BroadCastRPC(BlockPacket) returns (Empty) {}
 
   // DEBUG RPCS
+  rpc InitBroadCastRPC(BlockPacket) returns (Empty) {}
   rpc DJoin(PeerPacket) returns (Empty) {}
   rpc DSetSuccessor(PeerPacket) returns (Empty) {}
   rpc DSetD(PeerPacket) returns (Empty) {}
@@ -55,7 +55,10 @@ message LookupPacket {
   string i = 5;
 }
 
-message BlockPacket {}
+message BlockPacket {
+  string info = 1;
+  string limit = 2;
+}
 
 message BootStrapPacket {
   string src_id = 1;

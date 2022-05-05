@@ -32,9 +32,9 @@ type KoordeClient interface {
 	UpdateDPointerRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	AddDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	RemoveDParentRPC(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
-	UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
 	// DEBUG RPCS
+	InitBroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
 	DJoin(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetSuccessor(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetD(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
@@ -141,18 +141,18 @@ func (c *koordeClient) RemoveDParentRPC(ctx context.Context, in *PeerPacket, opt
 	return out, nil
 }
 
-func (c *koordeClient) UpdateNeigborRPC(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+func (c *koordeClient) BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/rpc.Koorde/UpdateNeigborRPC", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/BroadCastRPC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *koordeClient) BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error) {
+func (c *koordeClient) InitBroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/rpc.Koorde/BroadCastRPC", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/InitBroadCastRPC", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -231,9 +231,9 @@ type KoordeServer interface {
 	UpdateDPointerRPC(context.Context, *PeerPacket) (*Empty, error)
 	AddDParentRPC(context.Context, *PeerPacket) (*Empty, error)
 	RemoveDParentRPC(context.Context, *PeerPacket) (*Empty, error)
-	UpdateNeigborRPC(context.Context, *Empty) (*Empty, error)
 	BroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
 	// DEBUG RPCS
+	InitBroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
 	DJoin(context.Context, *PeerPacket) (*Empty, error)
 	DSetSuccessor(context.Context, *PeerPacket) (*Empty, error)
 	DSetD(context.Context, *PeerPacket) (*Empty, error)
@@ -277,11 +277,11 @@ func (UnimplementedKoordeServer) AddDParentRPC(context.Context, *PeerPacket) (*E
 func (UnimplementedKoordeServer) RemoveDParentRPC(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveDParentRPC not implemented")
 }
-func (UnimplementedKoordeServer) UpdateNeigborRPC(context.Context, *Empty) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateNeigborRPC not implemented")
-}
 func (UnimplementedKoordeServer) BroadCastRPC(context.Context, *BlockPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadCastRPC not implemented")
+}
+func (UnimplementedKoordeServer) InitBroadCastRPC(context.Context, *BlockPacket) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InitBroadCastRPC not implemented")
 }
 func (UnimplementedKoordeServer) DJoin(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DJoin not implemented")
@@ -494,24 +494,6 @@ func _Koorde_RemoveDParentRPC_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Koorde_UpdateNeigborRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(KoordeServer).UpdateNeigborRPC(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/rpc.Koorde/UpdateNeigborRPC",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KoordeServer).UpdateNeigborRPC(ctx, req.(*Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Koorde_BroadCastRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(BlockPacket)
 	if err := dec(in); err != nil {
@@ -526,6 +508,24 @@ func _Koorde_BroadCastRPC_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KoordeServer).BroadCastRPC(ctx, req.(*BlockPacket))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Koorde_InitBroadCastRPC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockPacket)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).InitBroadCastRPC(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/InitBroadCastRPC",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).InitBroadCastRPC(ctx, req.(*BlockPacket))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -686,12 +686,12 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Koorde_RemoveDParentRPC_Handler,
 		},
 		{
-			MethodName: "UpdateNeigborRPC",
-			Handler:    _Koorde_UpdateNeigborRPC_Handler,
-		},
-		{
 			MethodName: "BroadCastRPC",
 			Handler:    _Koorde_BroadCastRPC_Handler,
+		},
+		{
+			MethodName: "InitBroadCastRPC",
+			Handler:    _Koorde_InitBroadCastRPC_Handler,
 		},
 		{
 			MethodName: "DJoin",
