@@ -35,6 +35,7 @@ type KoordeClient interface {
 	BroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
 	// DEBUG RPCS
 	InitBroadCastRPC(ctx context.Context, in *BlockPacket, opts ...grpc.CallOption) (*Empty, error)
+	DGetBlocks(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BlocksPacket, error)
 	DJoin(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetSuccessor(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
 	DSetD(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error)
@@ -159,6 +160,15 @@ func (c *koordeClient) InitBroadCastRPC(ctx context.Context, in *BlockPacket, op
 	return out, nil
 }
 
+func (c *koordeClient) DGetBlocks(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*BlocksPacket, error) {
+	out := new(BlocksPacket)
+	err := c.cc.Invoke(ctx, "/rpc.Koorde/DGetBlocks", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *koordeClient) DJoin(ctx context.Context, in *PeerPacket, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/rpc.Koorde/DJoin", in, out, opts...)
@@ -234,6 +244,7 @@ type KoordeServer interface {
 	BroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
 	// DEBUG RPCS
 	InitBroadCastRPC(context.Context, *BlockPacket) (*Empty, error)
+	DGetBlocks(context.Context, *Empty) (*BlocksPacket, error)
 	DJoin(context.Context, *PeerPacket) (*Empty, error)
 	DSetSuccessor(context.Context, *PeerPacket) (*Empty, error)
 	DSetD(context.Context, *PeerPacket) (*Empty, error)
@@ -282,6 +293,9 @@ func (UnimplementedKoordeServer) BroadCastRPC(context.Context, *BlockPacket) (*E
 }
 func (UnimplementedKoordeServer) InitBroadCastRPC(context.Context, *BlockPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InitBroadCastRPC not implemented")
+}
+func (UnimplementedKoordeServer) DGetBlocks(context.Context, *Empty) (*BlocksPacket, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DGetBlocks not implemented")
 }
 func (UnimplementedKoordeServer) DJoin(context.Context, *PeerPacket) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DJoin not implemented")
@@ -530,6 +544,24 @@ func _Koorde_InitBroadCastRPC_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Koorde_DGetBlocks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KoordeServer).DGetBlocks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.Koorde/DGetBlocks",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KoordeServer).DGetBlocks(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Koorde_DJoin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PeerPacket)
 	if err := dec(in); err != nil {
@@ -692,6 +724,10 @@ var Koorde_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "InitBroadCastRPC",
 			Handler:    _Koorde_InitBroadCastRPC_Handler,
+		},
+		{
+			MethodName: "DGetBlocks",
+			Handler:    _Koorde_DGetBlocks_Handler,
 		},
 		{
 			MethodName: "DJoin",

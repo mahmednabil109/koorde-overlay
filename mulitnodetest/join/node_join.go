@@ -39,10 +39,15 @@ func main() {
 		go func(i int) {
 			defer wg.Done()
 
+			bootstrap_ip := "127.0.0.1:8080"
+			if i > 1 {
+				bootstrap_ip = fmt.Sprintf("127.0.0.1:%d", 8080+rand.Intn(i))
+			}
+
 			cmd := exec.Command("../../bin/koorde-overlay",
 				"-port", fmt.Sprintf("%d", 8080+i),
 				"-first", fmt.Sprint(u.IF(i == 0).Int(1, 0)),
-				"-bootstrap", "127.0.0.1:8080")
+				"-bootstrap", bootstrap_ip)
 			f, err := os.Create(fmt.Sprintf("%d.err.log", 8080+i))
 			if err != nil {
 				panic(err)
@@ -165,7 +170,7 @@ func main() {
 	// 	}
 	// }()
 
-	time.Sleep(30 * time.Second)
+	time.Sleep(time.Minute)
 	log.Println("Start the lookups")
 
 	pre := time.Now()

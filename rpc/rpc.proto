@@ -23,6 +23,7 @@ service Koorde {
 
   // DEBUG RPCS
   rpc InitBroadCastRPC(BlockPacket) returns (Empty) {}
+  rpc DGetBlocks(Empty) returns (BlocksPacket) {}
   rpc DJoin(PeerPacket) returns (Empty) {}
   rpc DSetSuccessor(PeerPacket) returns (Empty) {}
   rpc DSetD(PeerPacket) returns (Empty) {}
@@ -59,6 +60,8 @@ message BlockPacket {
   string info = 1;
   string limit = 2;
 }
+
+message BlocksPacket { repeated BlockPacket block = 1; }
 
 message BootStrapPacket {
   string src_id = 1;
