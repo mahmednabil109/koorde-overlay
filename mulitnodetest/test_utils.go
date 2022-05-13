@@ -13,7 +13,7 @@ import (
 var (
 	retryPolicy = `{
 		"methodConfig": [{
-		  "name": [{"service": "grpc.examples.echo.Echo"}],
+		  "name": [{"service": "rpc.Koorde"}],
 		  "waitForReady": true,
 		  "retryPolicy": {
 			  "MaxAttempts": 4,

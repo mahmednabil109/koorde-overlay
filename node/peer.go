@@ -9,6 +9,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var (
+	retryPolicy = `{
+		"methodConfig": [{
+		  "name": [{"service": "rpc.Koorde"}],
+		  "waitForReady": true,
+		  "retryPolicy": {
+			  "MaxAttempts": 4,
+			  "InitialBackoff": ".01s",
+			  "MaxBackoff": ".01s",
+			  "BackoffMultiplier": 1.0,
+			  "RetryableStatusCodes": [ "UNAVAILABLE" ]
+		  }
+		}]}`
+)
+
 type Peer struct {
 	NetAddr  *net.TCPAddr
 	NodeAddr ID
@@ -23,7 +38,12 @@ func (p *Peer) InitConnection() error {
 		return nil
 	}
 
-	conn, err := grpc.Dial(p.NetAddr.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(
+		p.NetAddr.String(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultServiceConfig(retryPolicy),
+	)
+
 	if err != nil {
 		log.Fatalf("can't dial: %v", err)
 		return err

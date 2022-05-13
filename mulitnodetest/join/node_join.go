@@ -40,9 +40,9 @@ func main() {
 			defer wg.Done()
 
 			bootstrap_ip := "127.0.0.1:8080"
-			if i > 1 {
-				bootstrap_ip = fmt.Sprintf("127.0.0.1:%d", 8080+rand.Intn(i))
-			}
+			// if i > 1 {
+			// 	bootstrap_ip = fmt.Sprintf("127.0.0.1:%d", 8080+rand.Intn(i))
+			// }
 
 			cmd := exec.Command("../../bin/koorde-overlay",
 				"-port", fmt.Sprintf("%d", 8080+i),
@@ -71,7 +71,6 @@ func main() {
 		}(i)
 	}
 	wg.Wait()
-	// time.Sleep(time.Second)
 
 	for i := 0; i < *NODE_NUM; i++ {
 		log.Print(node.ID(utils.SHA1OF(fmt.Sprintf("127.0.0.1:%d", 8080+i))).String())
@@ -170,7 +169,9 @@ func main() {
 	// 	}
 	// }()
 
-	time.Sleep(time.Minute)
+	// time.Sleep(time.Minute)
+	log.Print("Wait for the network to settle")
+	time.Sleep(20*time.Second + time.Second*time.Duration(len(nodes)))
 	log.Println("Start the lookups")
 
 	pre := time.Now()
