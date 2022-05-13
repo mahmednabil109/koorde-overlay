@@ -28,7 +28,7 @@ type Localnode struct {
 	NodeShutdown chan bool
 	s            *grpc.Server
 	// mock consensus
-	ConsensusAPI mock.Consensus
+	ConsensusAPI *mock.Consensus
 }
 
 /* RPC impelementation */

@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/mahmednabil109/koorde-overlay/mock"
 	"github.com/mahmednabil109/koorde-overlay/node"
 	"github.com/mahmednabil109/koorde-overlay/utils"
 )
@@ -22,6 +23,8 @@ func main() {
 	flag.Parse()
 
 	var n node.Localnode
+	n.ConsensusAPI = &mock.Consensus{}
+
 	err := n.Init(*port)
 	if err != nil {
 		log.Printf("faild to init the localnode: %v", err)

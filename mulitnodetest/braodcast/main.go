@@ -149,35 +149,36 @@ func main() {
 
 	log.Print("Start the Broadcasting")
 
-	// var b_wg sync.WaitGroup
+	var b_wg sync.WaitGroup
 
 	for i := range nodes {
-		// b_wg.Add(1)
+		b_wg.Add(1)
 
-		// go func(i int) {
-		// defer b_wg.Done()
-		// i := 0
-		// for j := range nodes {
-		// 	if nodes[j].Port == 8085 {
-		// 		i = j
-		// 		break
-		// 	}
-		// }
+		go func(i int) {
+			defer b_wg.Done()
+			// i := 0
+			// for j := range nodes {
+			// 	if nodes[j].Port == 8085 {
+			// 		i = j
+			// 		break
+			// 	}
+			// }
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+			start := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
 
-		num := string(fmt.Sprint(nodes[i].Port)[2:])
-		log.Printf("Init Braodcast from %d %s", nodes[i].Port, num)
+			num := string(fmt.Sprint(nodes[i].Port)[2:])
+			log.Printf("Init Braodcast from %d %s hi in %v", nodes[i].Port, num, time.Since(start))
 
-		_, err := nodes[i].KC.InitBroadCastRPC(ctx, &pd.BlockPacket{Info: num})
-		if err != nil {
-			panic(err)
-		}
-		time.Sleep(1 * time.Second)
-		// }(i)
+			_, err := nodes[i].KC.InitBroadCastRPC(ctx, &pd.BlockPacket{Info: num})
+			if err != nil {
+				panic(err)
+			}
+			time.Sleep(1 * time.Second)
+		}(i)
 	}
-	// b_wg.Wait()
+	b_wg.Wait()
 	time.Sleep(time.Second)
 
 	log.Printf("Done BraodCasting")
