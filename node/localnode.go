@@ -472,7 +472,10 @@ func (ln *Localnode) stablize() {
 		return
 	}
 
-	ln.Successor.InitConnection()
+	err := ln.Successor.InitConnection()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
 	defer cancel()

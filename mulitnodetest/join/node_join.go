@@ -29,6 +29,7 @@ func main() {
 	flag.Parse()
 
 	nodes := make([]u.Nnode, 0)
+	myIP := utils.GetMyIP().String()
 
 	// make concurrent joins :)
 	var wg sync.WaitGroup
@@ -39,9 +40,9 @@ func main() {
 		go func(i int) {
 			defer wg.Done()
 
-			bootstrap_ip := "127.0.0.1:8080"
+			bootstrap_ip := fmt.Sprintf("%s:8080", myIP)
 			// if i > 1 {
-			// 	bootstrap_ip = fmt.Sprintf("127.0.0.1:%d", 8080+rand.Intn(i))
+			// 	bootstrap_ip = fmt.Sprintf("%s:%d", myIP, 8080+rand.Intn(i))
 			// }
 
 			cmd := exec.Command("../../bin/koorde-overlay",
@@ -73,7 +74,7 @@ func main() {
 	wg.Wait()
 
 	for i := 0; i < *NODE_NUM; i++ {
-		log.Print(node.ID(utils.SHA1OF(fmt.Sprintf("127.0.0.1:%d", 8080+i))).String())
+		log.Print(node.ID(utils.SHA1OF(fmt.Sprintf("%s:%d", myIP, 8080+i))).String())
 	}
 
 	for i := range nodes {

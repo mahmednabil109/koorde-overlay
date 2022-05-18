@@ -6,6 +6,7 @@ import (
 	"os/exec"
 
 	pd "github.com/mahmednabil109/koorde-overlay/rpc"
+	"github.com/mahmednabil109/koorde-overlay/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -50,8 +51,10 @@ type Nnode struct {
 
 func (n *Nnode) Init() error {
 
+	myIP := utils.GetMyIP().String()
+
 	conn, err := grpc.Dial(
-		fmt.Sprintf("127.0.0.1:%d", n.Port),
+		fmt.Sprintf("%s:%d", myIP, n.Port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultServiceConfig(retryPolicy))
 
@@ -61,7 +64,7 @@ func (n *Nnode) Init() error {
 	}
 
 	n.KC = pd.NewKoordeClient(conn)
-	log.Printf("connection Done With %s", fmt.Sprintf("127.0.0.1:%d", n.Port))
+	log.Printf("connection Done With %s", fmt.Sprintf("%s:%d", myIP, n.Port))
 	return nil
 }
 

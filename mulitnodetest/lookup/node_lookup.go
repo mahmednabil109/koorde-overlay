@@ -26,6 +26,8 @@ var (
 )
 
 func main() {
+	flag.Parse()
+
 	nodes := make([]u.Nnode, 0)
 
 	// init the nodes paralle
