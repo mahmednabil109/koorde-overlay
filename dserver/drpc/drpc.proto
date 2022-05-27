@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package rpc;
+
+option go_package = "github.com/mahmednabil109/koorde-overlay/dserver/drpc";
+
+service DServer {
+  rpc UpdatePointers(DPointers) returns (DEmpty) {};
+}
+
+message DPointers {
+  string id = 1;
+  string successor = 2;
+  string d = 3;
+}
+
+message DEmpty {}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -17,6 +18,8 @@ var (
 	port      = flag.Int("port", 16585, "port for grpc of the localnode")
 	first     = flag.Int("first", 1, "flag to mark the node as the first in the network")
 	bootstrap = flag.String("bootstrap", "127.0.0.1:16585", "ip for bootstraping node")
+	d         = flag.Int("debug", 0, "debug flag")
+	dserver   = flag.String("dserver", "127.0.0.1:16585", "address of the dserver")
 )
 
 func main() {
@@ -25,7 +28,13 @@ func main() {
 	var n node.Localnode
 	n.ConsensusAPI = &mock.Consensus{}
 
-	err := n.Init(*port)
+	InitContext := context.WithValue(context.Background(), "port", *port)
+	InitContext = context.WithValue(InitContext, "d", *d)
+	InitContext = context.WithValue(InitContext, "dserver-addr", *dserver)
+
+	log.Printf("%+v", InitContext)
+
+	err := n.Init(InitContext)
 	if err != nil {
 		log.Printf("faild to init the localnode: %v", err)
 	}
