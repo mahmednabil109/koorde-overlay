@@ -46,6 +46,7 @@ message PeerPacket {
   string src_ip = 2;
   string start = 3;
   repeated string interval = 4;
+  int32 path_len = 5;
 }
 
 message LookupPacket {

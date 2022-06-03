@@ -83,6 +83,155 @@ func (x *DPointers) GetD() string {
 	return ""
 }
 
+type DBlock struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Bid string `protobuf:"bytes,1,opt,name=bid,proto3" json:"bid,omitempty"`
+}
+
+func (x *DBlock) Reset() {
+	*x = DBlock{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_drpc_drpc_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DBlock) ProtoMessage() {}
+
+func (x *DBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_drpc_drpc_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DBlock.ProtoReflect.Descriptor instead.
+func (*DBlock) Descriptor() ([]byte, []int) {
+	return file_drpc_drpc_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DBlock) GetBid() string {
+	if x != nil {
+		return x.Bid
+	}
+	return ""
+}
+
+type DBlocks struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Blocks []*DBlock `protobuf:"bytes,1,rep,name=blocks,proto3" json:"blocks,omitempty"`
+}
+
+func (x *DBlocks) Reset() {
+	*x = DBlocks{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_drpc_drpc_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DBlocks) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DBlocks) ProtoMessage() {}
+
+func (x *DBlocks) ProtoReflect() protoreflect.Message {
+	mi := &file_drpc_drpc_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DBlocks.ProtoReflect.Descriptor instead.
+func (*DBlocks) Descriptor() ([]byte, []int) {
+	return file_drpc_drpc_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DBlocks) GetBlocks() []*DBlock {
+	if x != nil {
+		return x.Blocks
+	}
+	return nil
+}
+
+type DPeer struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Addr string `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Id   string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *DPeer) Reset() {
+	*x = DPeer{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_drpc_drpc_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DPeer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DPeer) ProtoMessage() {}
+
+func (x *DPeer) ProtoReflect() protoreflect.Message {
+	mi := &file_drpc_drpc_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DPeer.ProtoReflect.Descriptor instead.
+func (*DPeer) Descriptor() ([]byte, []int) {
+	return file_drpc_drpc_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DPeer) GetAddr() string {
+	if x != nil {
+		return x.Addr
+	}
+	return ""
+}
+
+func (x *DPeer) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 type DEmpty struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -92,7 +241,7 @@ type DEmpty struct {
 func (x *DEmpty) Reset() {
 	*x = DEmpty{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_drpc_drpc_proto_msgTypes[1]
+		mi := &file_drpc_drpc_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -105,7 +254,7 @@ func (x *DEmpty) String() string {
 func (*DEmpty) ProtoMessage() {}
 
 func (x *DEmpty) ProtoReflect() protoreflect.Message {
-	mi := &file_drpc_drpc_proto_msgTypes[1]
+	mi := &file_drpc_drpc_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +267,7 @@ func (x *DEmpty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DEmpty.ProtoReflect.Descriptor instead.
 func (*DEmpty) Descriptor() ([]byte, []int) {
-	return file_drpc_drpc_proto_rawDescGZIP(), []int{1}
+	return file_drpc_drpc_proto_rawDescGZIP(), []int{4}
 }
 
 var File_drpc_drpc_proto protoreflect.FileDescriptor
@@ -130,15 +279,31 @@ var file_drpc_drpc_proto_rawDesc = []byte{
 	0x02, 0x69, 0x64, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x6f, 0x72,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x73, 0x75, 0x63, 0x63, 0x65, 0x73, 0x73, 0x6f,
 	0x72, 0x12, 0x0c, 0x0a, 0x01, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x01, 0x64, 0x22,
-	0x08, 0x0a, 0x06, 0x44, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x32, 0x3a, 0x0a, 0x07, 0x44, 0x53, 0x65,
-	0x72, 0x76, 0x65, 0x72, 0x12, 0x2f, 0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x6f,
-	0x69, 0x6e, 0x74, 0x65, 0x72, 0x73, 0x12, 0x0e, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x50, 0x6f,
-	0x69, 0x6e, 0x74, 0x65, 0x72, 0x73, 0x1a, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x45, 0x6d,
-	0x70, 0x74, 0x79, 0x22, 0x00, 0x42, 0x37, 0x5a, 0x35, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
-	0x63, 0x6f, 0x6d, 0x2f, 0x6d, 0x61, 0x68, 0x6d, 0x65, 0x64, 0x6e, 0x61, 0x62, 0x69, 0x6c, 0x31,
-	0x30, 0x39, 0x2f, 0x6b, 0x6f, 0x6f, 0x72, 0x64, 0x65, 0x2d, 0x6f, 0x76, 0x65, 0x72, 0x6c, 0x61,
-	0x79, 0x2f, 0x64, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x64, 0x72, 0x70, 0x63, 0x62, 0x06,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x1a, 0x0a, 0x06, 0x44, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x10, 0x0a, 0x03, 0x62, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x62, 0x69, 0x64, 0x22, 0x2e, 0x0a, 0x07, 0x44,
+	0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x23, 0x0a, 0x06, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x42, 0x6c,
+	0x6f, 0x63, 0x6b, 0x52, 0x06, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x22, 0x2b, 0x0a, 0x05, 0x44,
+	0x50, 0x65, 0x65, 0x72, 0x12, 0x12, 0x0a, 0x04, 0x61, 0x64, 0x64, 0x72, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x61, 0x64, 0x64, 0x72, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x08, 0x0a, 0x06, 0x44, 0x45, 0x6d, 0x70,
+	0x74, 0x79, 0x32, 0xbc, 0x01, 0x0a, 0x07, 0x44, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x12, 0x2f,
+	0x0a, 0x0e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x73,
+	0x12, 0x0e, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x50, 0x6f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x73,
+	0x1a, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x00, 0x12,
+	0x2c, 0x0a, 0x0e, 0x42, 0x72, 0x6f, 0x61, 0x64, 0x63, 0x61, 0x73, 0x74, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x12, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x1a, 0x0b,
+	0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x00, 0x12, 0x24, 0x0a,
+	0x07, 0x43, 0x6f, 0x6e, 0x6e, 0x65, 0x63, 0x74, 0x12, 0x0a, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44,
+	0x50, 0x65, 0x65, 0x72, 0x1a, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x45, 0x6d, 0x70, 0x74,
+	0x79, 0x22, 0x00, 0x12, 0x2c, 0x0a, 0x0d, 0x47, 0x65, 0x74, 0x4c, 0x6f, 0x63, 0x61, 0x6c, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x0b, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x45, 0x6d, 0x70, 0x74,
+	0x79, 0x1a, 0x0c, 0x2e, 0x72, 0x70, 0x63, 0x2e, 0x44, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x22,
+	0x00, 0x42, 0x37, 0x5a, 0x35, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x6d, 0x61, 0x68, 0x6d, 0x65, 0x64, 0x6e, 0x61, 0x62, 0x69, 0x6c, 0x31, 0x30, 0x39, 0x2f, 0x6b,
+	0x6f, 0x6f, 0x72, 0x64, 0x65, 0x2d, 0x6f, 0x76, 0x65, 0x72, 0x6c, 0x61, 0x79, 0x2f, 0x64, 0x73,
+	0x65, 0x72, 0x76, 0x65, 0x72, 0x2f, 0x64, 0x72, 0x70, 0x63, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -153,19 +318,29 @@ func file_drpc_drpc_proto_rawDescGZIP() []byte {
 	return file_drpc_drpc_proto_rawDescData
 }
 
-var file_drpc_drpc_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_drpc_drpc_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_drpc_drpc_proto_goTypes = []interface{}{
 	(*DPointers)(nil), // 0: rpc.DPointers
-	(*DEmpty)(nil),    // 1: rpc.DEmpty
+	(*DBlock)(nil),    // 1: rpc.DBlock
+	(*DBlocks)(nil),   // 2: rpc.DBlocks
+	(*DPeer)(nil),     // 3: rpc.DPeer
+	(*DEmpty)(nil),    // 4: rpc.DEmpty
 }
 var file_drpc_drpc_proto_depIdxs = []int32{
-	0, // 0: rpc.DServer.UpdatePointers:input_type -> rpc.DPointers
-	1, // 1: rpc.DServer.UpdatePointers:output_type -> rpc.DEmpty
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: rpc.DBlocks.blocks:type_name -> rpc.DBlock
+	0, // 1: rpc.DServer.UpdatePointers:input_type -> rpc.DPointers
+	1, // 2: rpc.DServer.BroadcastBlock:input_type -> rpc.DBlock
+	3, // 3: rpc.DServer.Connect:input_type -> rpc.DPeer
+	4, // 4: rpc.DServer.GetLocalBlock:input_type -> rpc.DEmpty
+	4, // 5: rpc.DServer.UpdatePointers:output_type -> rpc.DEmpty
+	4, // 6: rpc.DServer.BroadcastBlock:output_type -> rpc.DEmpty
+	4, // 7: rpc.DServer.Connect:output_type -> rpc.DEmpty
+	2, // 8: rpc.DServer.GetLocalBlock:output_type -> rpc.DBlocks
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_drpc_drpc_proto_init() }
@@ -187,6 +362,42 @@ func file_drpc_drpc_proto_init() {
 			}
 		}
 		file_drpc_drpc_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DBlock); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_drpc_drpc_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DBlocks); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_drpc_drpc_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DPeer); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_drpc_drpc_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DEmpty); i {
 			case 0:
 				return &v.state
@@ -205,7 +416,7 @@ func file_drpc_drpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_drpc_drpc_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -5,15 +5,39 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <style>
-      .te {
-        font-size: 14px;
-        font-family: monospace;
-      }
-    </style>
+    <style></style>
   </head>
   <body>
     <div class="body"></div>
+    <div class="control">
+      <div class="selected-node">
+        <p><strong>Selected Node</strong></p>
+        <p class="id"></p>
+      </div>
+
+      <div class="cont">
+        <div class="send">
+          <h2>Control Panel</h2>
+
+          <textarea
+            name="broadcast"
+            id="broadcast"
+            cols="30"
+            rows="10"
+          ></textarea>
+          <button id="broadcast">Broadcast</button>
+        </div>
+        <div class="content">
+          <h2>Local Blocks</h2>
+          <div class="blocks">
+            <div class="block">12</div>
+            <div class="block">12</div>
+            <div class="block">12</div>
+          </div>
+          <button id="get-blocks">GET Blocks</button>
+        </div>
+      </div>
+    </div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

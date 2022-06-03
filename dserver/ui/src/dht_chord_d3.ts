@@ -50,6 +50,9 @@ export class DHTChord {
     for (var i = 0; i < path.length; i++) {
       var coords: [number, number][] = [];
       var l: [number, number] = path[i];
+
+      if (isNaN(l[0]) || isNaN(l[1])) continue;
+
       var mid, offset: number;
       [mid, offset] = this.get_curve_point(l[0], l[1]);
       coords[0] = [this.get_x(l[0]), this.get_y(l[0])];
@@ -129,6 +132,10 @@ export class DHTChord {
     return `0x${key.toString(16)}`;
   }
 
+  get_numer(key: number) {
+    return String(key);
+  }
+
   build_chord() {
     this.svg = d3
       .select(this.root)
@@ -156,6 +163,8 @@ export class DHTChord {
     nodes
       .append("circle")
       .attr("fill", "green")
+      .attr("class", (_, i: number) => `clickable node-${i}`)
+      .attr("onclick", (_, i: number) => `window.handleNodeClick(${i})`)
       .attr("cx", (d: any) => {
         return this.get_x(d);
       })

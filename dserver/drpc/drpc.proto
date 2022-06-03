@@ -6,12 +6,24 @@ option go_package = "github.com/mahmednabil109/koorde-overlay/dserver/drpc";
 
 service DServer {
   rpc UpdatePointers(DPointers) returns (DEmpty) {};
+  rpc BroadcastBlock(DBlock) returns (DEmpty) {};
+  rpc Connect(DPeer) returns (DEmpty) {};
+  rpc GetLocalBlock(DEmpty) returns (DBlocks) {};
 }
 
 message DPointers {
   string id = 1;
   string successor = 2;
   string d = 3;
+}
+
+message DBlock { string bid = 1; }
+
+message DBlocks { repeated DBlock blocks = 1; }
+
+message DPeer {
+  string addr = 1;
+  string id = 2;
 }
 
 message DEmpty {}

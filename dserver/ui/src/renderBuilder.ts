@@ -27,7 +27,7 @@ export class RenderBuilder {
   }
 
   render() {
-    console.log(this.path);
+    // console.log(this.path);
     this.chord.build_chord();
     this.chord.draw_key_path(this.path);
     return this;

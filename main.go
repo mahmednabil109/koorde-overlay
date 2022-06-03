@@ -20,6 +20,7 @@ var (
 	bootstrap = flag.String("bootstrap", "127.0.0.1:16585", "ip for bootstraping node")
 	d         = flag.Int("debug", 0, "debug flag")
 	dserver   = flag.String("dserver", "127.0.0.1:16585", "address of the dserver")
+	dport     = flag.Int("dport", 16586, "dport")
 )
 
 func main() {
@@ -31,6 +32,7 @@ func main() {
 	InitContext := context.WithValue(context.Background(), "port", *port)
 	InitContext = context.WithValue(InitContext, "d", *d)
 	InitContext = context.WithValue(InitContext, "dserver-addr", *dserver)
+	InitContext = context.WithValue(InitContext, "dport", *dport)
 
 	log.Printf("%+v", InitContext)
 
