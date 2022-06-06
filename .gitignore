@@ -3,3 +3,6 @@ bin
 **/.ipynb_checkpoints
 **__debug_bin
 **/*.log
+
+ghz_test.sh
+result.html

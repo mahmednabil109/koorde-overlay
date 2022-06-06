@@ -19,6 +19,8 @@ import (
 
 var (
 	NODE_NUM = flag.Int("node-num", 3, "number of nodes in the network")
+	DEBUG    = flag.Int("d", 0, "debug flag")
+	DSERVER  = flag.String("dserver", "127.0.0.1:16585", "debug server addr")
 	LOOKUPS  = flag.Int("lookups", 100, "number of lookups to test with")
 )
 
@@ -53,7 +55,10 @@ func main() {
 			cmd := exec.Command("../../bin/koorde-overlay",
 				"-port", fmt.Sprintf("%d", 8080+i),
 				"-first", fmt.Sprint(u.IF(i == 0).Int(1, 0)),
-				"-bootstrap", bootstrap_ip)
+				"-bootstrap", bootstrap_ip,
+				"-debug", fmt.Sprint(*DEBUG),
+				"-dserver", *DSERVER,
+			)
 			f, err := os.Create(fmt.Sprintf("%d.err.log", 8080+i))
 			if err != nil {
 				panic(err)
@@ -89,6 +94,7 @@ func main() {
 		nodes[i].ID = peer.SrcId
 		log.Printf("%d has %s", nodes[i].Port, peer.SrcId)
 	}
+	log.Print("Wait until network to sattel")
 
 	time.Sleep(10*time.Second + time.Second*time.Duration(len(nodes)))
 	// time.Sleep(10 * time.Second)

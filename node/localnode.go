@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/mahmednabil109/koorde-overlay/dserver/client"
 	"github.com/mahmednabil109/koorde-overlay/mock"
 	pd "github.com/mahmednabil109/koorde-overlay/rpc"
 	"github.com/mahmednabil109/koorde-overlay/utils"
@@ -29,6 +30,8 @@ type Localnode struct {
 	s            *grpc.Server
 	// mock consensus
 	ConsensusAPI *mock.Consensus
+	// dsever
+	DClient client.Client
 }
 
 /* RPC impelementation */
@@ -36,14 +39,14 @@ type Localnode struct {
 func (ln *Localnode) BootStarpRPC(bctx context.Context, bootstrapPacket *pd.BootStrapPacket) (*pd.BootStrapReply, error) {
 	src_id := ID(utils.ParseID(bootstrapPacket.SrcId))
 
-	successor, err := ln.Lookup(src_id)
+	successor, _, err := ln.Lookup(src_id)
 	if err != nil {
 		return nil, err
 	}
 
 	d_id, _ := src_id.LeftShift()
 	// lookup returns the successor
-	d, err := ln.Lookup(d_id)
+	d, _, err := ln.Lookup(d_id)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +108,7 @@ func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPack
 			log.Printf("lookup faild: %v", err)
 			return nil, err
 		}
+		reply.PathLen++
 		return reply, nil
 	}
 	log.Printf("Correction -> %s", ln.Successor.NetAddr)
@@ -120,6 +124,7 @@ func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPack
 		log.Fatalf("lookup faild: %v", err)
 		return nil, err
 	}
+	reply.PathLen++
 	return reply, nil
 }
 
@@ -230,10 +235,10 @@ func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.E
 		}
 
 		log.Printf("Broadcast %s --> %s limit %s", b.Info, ln.Successor.NetAddr.String(), NewLimit)
-
+		b.Limit = NewLimit
 		ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
 		defer cancel()
-		_, err = ln.Successor.kc.BroadCastRPC(ctx, &pd.BlockPacket{Limit: NewLimit, Info: b.Info})
+		_, err = ln.Successor.kc.BroadCastRPC(ctx, b)
 		if err != nil {
 			return nil, err
 		}
@@ -245,10 +250,10 @@ func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.E
 			}
 
 			log.Printf("Broadcast %s --> %s limit %s", b.Info, ln.D.NetAddr.String(), b.Limit)
-
+			b.Limit = LimitID.String()
 			ctx, cancel := context.WithTimeout(context.Background(), MAX_REQ_TIME)
 			defer cancel()
-			_, err = ln.D.kc.BroadCastRPC(ctx, &pd.BlockPacket{Limit: b.Limit, Info: b.Info})
+			_, err = ln.D.kc.BroadCastRPC(ctx, b)
 			if err != nil {
 				return nil, err
 			}
@@ -306,8 +311,11 @@ func (n *Localnode) DGetPointers(ctx context.Context, e *pd.Empty) (*pd.Pointers
 }
 
 func (n *Localnode) DLKup(ctx context.Context, p *pd.PeerPacket) (*pd.PeerPacket, error) {
-	reply, err := n.Lookup(utils.ParseID(p.SrcId))
-	return form_peer_packet(reply), err
+	reply, l, err := n.Lookup(utils.ParseID(p.SrcId))
+	r := form_peer_packet(reply)
+	log.Printf("asd length %d", l)
+	r.PathLen = int32(l)
+	return r, err
 }
 
 func (n *Localnode) DGetBlocks(ctx context.Context, e *pd.Empty) (*pd.BlocksPacket, error) {
@@ -324,8 +332,15 @@ func (n *Localnode) DGetBlocks(ctx context.Context, e *pd.Empty) (*pd.BlocksPack
 
 // Init initializes the first node in the network
 // It inits the Successor, D pointers with default values (node itslef)
-func (ln *Localnode) Init(port int) error {
+func (ln *Localnode) Init(cxt context.Context) error {
 	myIP := utils.GetMyIP()
+	port := cxt.Value("port").(int)
+	debugFlag := cxt.Value("d").(int)
+
+	if debugFlag == 1 {
+		log.Print("debug is activated")
+	}
+
 	ln.NetAddr = &net.TCPAddr{IP: myIP, Port: port}
 	ln.NodeAddr = utils.SHA1OF(ln.NetAddr.String())
 	ln.Start = ln.NodeAddr
@@ -344,6 +359,29 @@ func (ln *Localnode) Init(port int) error {
 			select {
 			case <-ticker.C:
 				ln.stablize()
+				if debugFlag == 1 {
+
+					// dserver update
+					go func() {
+						var (
+							succ_add string = ""
+							d_add    string = ""
+						)
+
+						if ln.D != nil {
+							d_add = ln.D.NodeAddr.String()
+						}
+						if ln.Successor != nil {
+							succ_add = ln.Successor.NodeAddr.String()
+						}
+
+						ln.DClient.Update(
+							ln.NodeAddr.String(),
+							succ_add,
+							d_add,
+						)
+					}()
+				}
 			case <-ln.NodeShutdown:
 				ticker.Stop()
 				return
@@ -366,6 +404,12 @@ func (ln *Localnode) Init(port int) error {
 		}
 	}()
 
+	if debugFlag == 1 {
+		// init the dclient
+		dport := cxt.Value("dport").(int)
+		ln.DClient.Init(ln, cxt.Value("dserver-addr").(string), dport)
+	}
+
 	return err
 }
 
@@ -375,7 +419,8 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 	log.Printf("Join %s", nodeAddr.String())
 
 	if ln.s == nil {
-		err := ln.Init(port)
+		cxt := context.WithValue(context.Background(), "port", port)
+		err := ln.Init(cxt)
 		if err != nil {
 			log.Fatal(err)
 			return err
@@ -410,7 +455,7 @@ func (ln *Localnode) Join(nodeAddr *net.TCPAddr, port int) error {
 	return nil
 }
 
-func (ln *Localnode) Lookup(k ID) (*Peer, error) {
+func (ln *Localnode) Lookup(k ID) (*Peer, int32, error) {
 	kShift, i := select_imaginary_node(k, ln.NodeAddr, ln.Successor.NodeAddr)
 	log.Printf("init %s %s %s", k.String(), kShift.String(), i.String())
 
@@ -425,7 +470,7 @@ func (ln *Localnode) Lookup(k ID) (*Peer, error) {
 
 	reply, err := ln.LookupRPC(ctx, lookupPacket)
 
-	return parse_peer_packet(reply), err
+	return parse_peer_packet(reply), reply.PathLen, err
 }
 
 func (ln *Localnode) BroadCast(info string) error {
@@ -464,6 +509,14 @@ func (ln *Localnode) BroadCast(info string) error {
 
 	return nil
 
+}
+
+func (ln *Localnode) GetLocalBlocks() []mock.Block {
+	return ln.ConsensusAPI.GetBlocks()
+}
+
+func (ln *Localnode) GetID() string {
+	return ln.NodeAddr.String()
 }
 
 func (ln *Localnode) stablize() {
@@ -517,7 +570,7 @@ func (ln *Localnode) fixPointers() {
 
 	D_id, _ := ln.NodeAddr.LeftShift()
 
-	peer, err := ln.Lookup(D_id)
+	peer, _, err := ln.Lookup(D_id)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -633,6 +686,7 @@ func form_peer_packet(peer *Peer) *pd.PeerPacket {
 		SrcId:    peer.NodeAddr.String(),
 		SrcIp:    peer.NetAddr.String(),
 		Start:    peer.Start.String(),
+		PathLen:  0,
 		Interval: []string{peer.Interval[0].String(), peer.Interval[1].String()},
 	}
 }

@@ -8,10 +8,8 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/signal"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 
 	u "github.com/mahmednabil109/koorde-overlay/mulitnodetest"
@@ -23,6 +21,7 @@ import (
 var (
 	NODE_NUM    = flag.Int("node-num", 100, "number of nodes in the system")
 	LOOKUPS_NUM = flag.Int("lookups", 10000, "number of lookups to test with")
+	DEBUG       = flag.Int("d", 0, "debug flag")
 )
 
 func main() {
@@ -175,7 +174,7 @@ func main() {
 				panic(err)
 			}
 
-			log.Printf("lookup %d result: %v hi in %v", k, reply.SrcId, time.Since(pre))
+			log.Printf("lookup %d result: %v distance %d hi in %v", k, reply.SrcId, reply.PathLen, time.Since(pre))
 		}(i, j, k)
 
 	}
@@ -183,11 +182,12 @@ func main() {
 
 	log.Printf("%d lookups takes: %s", *LOOKUPS_NUM, time.Since(pre))
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	// make the script wait
+	// sigs := make(chan os.Signal, 1)
+	// signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	<-sigs
-	for i := range nodes {
-		nodes[i].Cmd.Wait()
-	}
+	// <-sigs
+	// for i := range nodes {
+	// 	nodes[i].Cmd.Wait()
+	// }
 }
