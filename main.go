@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/mahmednabil109/koorde-overlay/mock"
 	"github.com/mahmednabil109/koorde-overlay/node"
@@ -25,6 +27,7 @@ var (
 
 func main() {
 	flag.Parse()
+	rand.Seed(time.Now().UnixNano())
 
 	var n node.Localnode
 	n.ConsensusAPI = &mock.Consensus{}

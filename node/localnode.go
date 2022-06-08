@@ -68,6 +68,9 @@ func (ln *Localnode) BootStarpRPC(bctx context.Context, bootstrapPacket *pd.Boot
 
 func (ln *Localnode) LookupRPC(bctx context.Context, lookupPacket *pd.LookupPacket) (*pd.PeerPacket, error) {
 
+	// time.Sleep(time.Duration(rand.Intn(25)) * (time.Millisecond))
+	log.Print("IN lookup")
+
 	k := ID(utils.ParseID(lookupPacket.K))
 	kShift := ID(utils.ParseID(lookupPacket.KShift))
 	i := ID(utils.ParseID(lookupPacket.I))
@@ -201,7 +204,9 @@ func (ln *Localnode) NotifyRPC(ctx context.Context, p *pd.PeerPacket) (*pd.Empty
 }
 
 func (ln *Localnode) BroadCastRPC(ctx context.Context, b *pd.BlockPacket) (*pd.Empty, error) {
-	log.Printf("Braodcast %s", b.Info)
+	log.Printf("IN Broadcast %s", b.Info)
+	// time.Sleep(time.Duration(rand.Intn(25)) * (time.Millisecond))
+
 	// TODO notify the consensus code
 	ln.ConsensusAPI.AddBlock(mock.Block{Info: b.Info})
 
@@ -469,6 +474,9 @@ func (ln *Localnode) Lookup(k ID) (*Peer, int32, error) {
 	defer cancel()
 
 	reply, err := ln.LookupRPC(ctx, lookupPacket)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	return parse_peer_packet(reply), reply.PathLen, err
 }
